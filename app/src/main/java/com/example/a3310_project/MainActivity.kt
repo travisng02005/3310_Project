@@ -65,7 +65,8 @@ fun _3310_ProjectApp() {
                     modifier = Modifier.padding(innerPadding)
                 )
                 AppDestinations.LISTINGS -> ListingsScreen(
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(innerPadding),
+                    "user123"
                 )
                 AppDestinations.PROFILE -> ProfileScreen(
                     modifier = Modifier.padding(innerPadding)
@@ -82,14 +83,6 @@ enum class AppDestinations(
     HOME("Home", Icons.Default.Home),
     LISTINGS("Listings", Icons.Default.Menu),
     PROFILE("Profile", Icons.Default.AccountBox),
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
 }
 
 @Preview(showBackground = true)
