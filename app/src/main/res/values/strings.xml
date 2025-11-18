@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">3310_Project</string>
     <string name="title_activity_listings">Listings</string>
+    <string name="title_activity_home">Home</string>
+    <string name="title_activity_database">Database</string>
+    <string name="title_activity_profile">Profile</string>
 </resources>

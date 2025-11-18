@@ -60,10 +60,17 @@ fun _3310_ProjectApp() {
         }
     ) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
-            )
+            when (currentDestination) {
+                AppDestinations.HOME -> HomeScreen(
+                    modifier = Modifier.padding(innerPadding)
+                )
+                AppDestinations.LISTINGS -> ListingsScreen(
+                    modifier = Modifier.padding(innerPadding)
+                )
+                AppDestinations.PROFILE -> ProfileScreen(
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
         }
     }
 }
@@ -87,8 +94,8 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun HomeScreenPreview() {
     _3310_ProjectTheme {
-        Greeting("Android")
+        HomeScreen()
     }
 }
