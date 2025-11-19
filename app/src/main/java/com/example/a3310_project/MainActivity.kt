@@ -1,5 +1,6 @@
 package com.example.a3310_project
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 
@@ -41,6 +43,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun _3310_ProjectApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+    val context = LocalContext.current
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -61,12 +64,10 @@ fun _3310_ProjectApp() {
     ) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             when (currentDestination) {
-                AppDestinations.HOME -> HomeScreen(
-                    modifier = Modifier.padding(innerPadding)
-                )
+                AppDestinations.HOME -> MainScreen()
                 AppDestinations.LISTINGS -> ListingsScreen(
                     modifier = Modifier.padding(innerPadding),
-                    "user123"
+                    "jessicanguyen"
                 )
                 AppDestinations.PROFILE -> ProfileScreen(
                     modifier = Modifier.padding(innerPadding)
@@ -89,6 +90,6 @@ enum class AppDestinations(
 @Composable
 fun HomeScreenPreview() {
     _3310_ProjectTheme {
-        HomeScreen()
+        MainScreen()
     }
 }

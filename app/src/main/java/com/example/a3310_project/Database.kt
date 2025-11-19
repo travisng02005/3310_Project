@@ -12,15 +12,9 @@ data class TicketEntry(
     val description: String? = null,
 )
 data class Profile(
+    val name: String,
     val userId: String,
     val password: String
-)
-data class PaymentMethod(
-    val id: Int = 0,
-    val userId: String,
-    val cardNumber: String,
-    val expiry: String,
-    val name: String
 )
 class DatabaseSchema(context: Context) : SQLiteOpenHelper(
     context,
@@ -28,19 +22,19 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
     null,
     DATABASE_VERSION
 ) {
-    
+
     companion object {
         const val DATABASE_NAME = "example_app.db"
-        const val DATABASE_VERSION = 2
+        const val DATABASE_VERSION = 3
         const val TICKETS_TABLE_NAME = "ticket_entries"
         const val PROFILES_TABLE_NAME = "account_entries"
-        const val PM_TABLE_NAME = "payment_method_entries"
     }
-    
+
     override fun onCreate(db: SQLiteDatabase) {
         // Create profile table
         val createProfileTableQuery = """
         CREATE TABLE $PROFILES_TABLE_NAME (
+            name TEXT NOT NULL,
             userId TEXT PRIMARY KEY,
             password TEXT NOT NULL
         )
@@ -49,20 +43,6 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
 
         // Create tickets table with foreign key reference
         val createTicketTableQuery = """
-        CREATE TABLE $PM_TABLE_NAME (
-            userId TEXT PRIMARY KEY,
-            cardNumber double NOT NULL,
-            expiry TEXT NOT NULL,
-            name TEXT,
-            FOREIGN KEY (userId) REFERENCES $PROFILES_TABLE_NAME(userId)
-                ON DELETE CASCADE
-                ON UPDATE CASCADE
-        )
-    """
-        db.execSQL(createTicketTableQuery)
-
-        // Create tickets table with foreign key reference
-        val createPMTableQuery = """
         CREATE TABLE $TICKETS_TABLE_NAME (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             userId TEXT NOT NULL,
@@ -74,12 +54,12 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
                 ON UPDATE CASCADE
         )
     """
-        db.execSQL(createPMTableQuery)
+        db.execSQL(createTicketTableQuery)
 
         // Insert sample data
         insertSampleData(db)
     }
-    
+
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // Drop old tables and recreate
         db.execSQL("DROP TABLE IF EXISTS $PROFILES_TABLE_NAME")
@@ -88,18 +68,43 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
     }
 
     private fun insertSampleData(db: SQLiteDatabase) {
-        // Sample profiles
-        db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (userId, password) VALUES ('user123', 'pass123')")
+        // Sample users - column order: name, userId, password (matching CREATE TABLE)
+        db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('John Doe', 'john_doe', 'password123')")
+        db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('Jane Smith', 'jane_smith', 'password123')")
+        db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('Mike Johnson', 'music_lover', 'password123')")
+        db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('Jessica Nguyen', 'jessicanguyen', 'password124')")
 
-        // Sample tickets for user123
-        db.execSQL("""
-        INSERT INTO $TICKETS_TABLE_NAME (userId, name, price, description) 
-        VALUES ('user123', 'Concert Ticket', 59.99, 'VIP access')
-    """)
-        db.execSQL("""
-        INSERT INTO $TICKETS_TABLE_NAME (userId, name, price, description) 
-        VALUES ('user123', 'Movie Ticket', 12.50, 'IMAX screening')
-    """)
+        // Sample tickets - price as INTEGER (no decimals)
+        db.execSQL(
+            """
+        INSERT INTO $TICKETS_TABLE_NAME (name, description, price, userId) 
+        VALUES ('Coldplay Concert', 'Amazing night with Coldplay live in concert', 120, 'john_doe')
+    """
+        )
+        db.execSQL(
+            """
+        INSERT INTO $TICKETS_TABLE_NAME (name, description, price, userId) 
+        VALUES ('Taylor Swift Tour', 'Eras Tour - Best seats available', 250, 'jane_smith')
+    """
+        )
+        db.execSQL(
+            """
+        INSERT INTO $TICKETS_TABLE_NAME (name, description, price, userId) 
+        VALUES ('Local Music Festival', 'Weekend pass for all stages', 75, 'music_lover')
+    """
+        )
+        db.execSQL(
+            """
+        INSERT INTO $TICKETS_TABLE_NAME (name, description, price, userId) 
+        VALUES ('Rock Band Live', 'Greatest rock hits live performance', 90, 'jessicanguyen')
+    """
+        )
+        db.execSQL(
+            """
+        INSERT INTO $TICKETS_TABLE_NAME (name, description, price, userId) 
+        VALUES ('Jazz Night', 'Smooth jazz evening with local artists', 45, 'jessicanguyen')
+    """
+        )
     }
 }
 
@@ -123,8 +128,8 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         val db = getDatabase()
         return try {
             db.execSQL(
-                "INSERT INTO ${DatabaseSchema.PROFILES_TABLE_NAME} (userId, password) VALUES (?, ?)",
-                arrayOf(profile.userId, profile.password)
+                "INSERT INTO ${DatabaseSchema.PROFILES_TABLE_NAME} (name, userId, password) VALUES (?, ?, ?)",
+                arrayOf(profile.name, profile.userId, profile.password)
             )
             db.close()
             true
@@ -138,13 +143,14 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
     fun getProfile(userId: String): Profile? {
         val db = getDatabase()
         val cursor = db.rawQuery(
-            "SELECT userId, password FROM ${DatabaseSchema.PROFILES_TABLE_NAME} WHERE userId = ?",
+            "SELECT name, userId, password FROM ${DatabaseSchema.PROFILES_TABLE_NAME} WHERE userId = ?",
             arrayOf(userId)
         )
 
         var profile: Profile? = null
         if (cursor.moveToFirst()) {
             profile = Profile(
+                name = cursor.getString(cursor.getColumnIndexOrThrow("name")),
                 userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
                 password = cursor.getString(cursor.getColumnIndexOrThrow("password"))
             )
@@ -159,13 +165,14 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         val db = getDatabase()
         val profiles = mutableListOf<Profile>()
         val cursor = db.rawQuery(
-            "SELECT userId, password FROM ${DatabaseSchema.PROFILES_TABLE_NAME}",
+            "SELECT name, userId, password FROM ${DatabaseSchema.PROFILES_TABLE_NAME}",
             null
         )
 
         while (cursor.moveToNext()) {
             profiles.add(
                 Profile(
+                    name = cursor.getString(cursor.getColumnIndexOrThrow("name")),
                     userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
                     password = cursor.getString(cursor.getColumnIndexOrThrow("password"))
                 )
@@ -181,8 +188,8 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         val db = getDatabase()
         return try {
             db.execSQL(
-                "UPDATE ${DatabaseSchema.PROFILES_TABLE_NAME} SET password = ? WHERE userId = ?",
-                arrayOf(profile.password, profile.userId)
+                "UPDATE ${DatabaseSchema.PROFILES_TABLE_NAME} SET name = ?, password = ? WHERE userId = ?",
+                arrayOf(profile.name, profile.password, profile.userId)
             )
             db.close()
             true
@@ -196,7 +203,6 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
     fun deleteProfile(userId: String): Boolean {
         val db = getDatabase()
         return try {
-            // Due to CASCADE, this will also delete tickets and payment methods
             db.execSQL(
                 "DELETE FROM ${DatabaseSchema.PROFILES_TABLE_NAME} WHERE userId = ?",
                 arrayOf(userId)
@@ -211,7 +217,38 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
     }
 
     // tickets table helper functions //
+    fun getAllTickets(): List<TicketEntry> {
+        val db = getDatabase()
+        val entries = mutableListOf<TicketEntry>()
 
+        val cursor = db.rawQuery(
+            "SELECT id, userId, name, price, description FROM ${DatabaseSchema.TICKETS_TABLE_NAME}",
+            null
+        )
+
+        while (cursor.moveToNext()) {
+            val id = cursor.getInt(cursor.getColumnIndexOrThrow("id"))
+            val userIdCol = cursor.getString(cursor.getColumnIndexOrThrow("userId"))
+            val name = cursor.getString(cursor.getColumnIndexOrThrow("name"))
+            val price = cursor.getFloat(cursor.getColumnIndexOrThrow("price"))
+            val description = cursor.getString(cursor.getColumnIndexOrThrow("description"))
+
+            entries.add(
+                TicketEntry(
+                    id = id,
+                    userId = userIdCol,
+                    name = name,
+                    price = price,
+                    description = description
+                )
+            )
+        }
+
+        cursor.close()
+        db.close()
+
+        return entries
+    }
     fun getEntriesByUserId(userId: String): List<TicketEntry> {
         val db = getDatabase()
         val entries = mutableListOf<TicketEntry>()
@@ -324,130 +361,6 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         cursor.close()
         db.close()
         return entries
-    }
-
-    // payment methods table helper functions //
-
-    fun insertPaymentMethod(paymentMethod: PaymentMethod): Boolean {
-        val db = getDatabase()
-        return try {
-            db.execSQL(
-                """
-                INSERT INTO ${DatabaseSchema.PM_TABLE_NAME} 
-                (userId, cardNumber, expiry, name) 
-                VALUES (?, ?, ?, ?)
-                """,
-                arrayOf(
-                    paymentMethod.userId,
-                    paymentMethod.cardNumber,
-                    paymentMethod.expiry,
-                    paymentMethod.name
-                )
-            )
-            db.close()
-            true
-        } catch (e: Exception) {
-            print("Error: $e")
-            db.close()
-            false
-        }
-    }
-
-    fun getPaymentMethodsByUserId(userId: String): List<PaymentMethod> {
-        val db = getDatabase()
-        val paymentMethods = mutableListOf<PaymentMethod>()
-        val cursor = db.rawQuery(
-            """
-            SELECT id, userId, cardNumber, expiry, name 
-            FROM ${DatabaseSchema.PM_TABLE_NAME} 
-            WHERE userId = ?
-            """,
-            arrayOf(userId)
-        )
-
-        while (cursor.moveToNext()) {
-            paymentMethods.add(
-                PaymentMethod(
-                    id = cursor.getInt(cursor.getColumnIndexOrThrow("id")),
-                    userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
-                    cardNumber = cursor.getString(cursor.getColumnIndexOrThrow("cardNumber")),
-                    expiry = cursor.getString(cursor.getColumnIndexOrThrow("expiry")),
-                    name = cursor.getString(cursor.getColumnIndexOrThrow("name"))
-                )
-            )
-        }
-
-        cursor.close()
-        db.close()
-        return paymentMethods
-    }
-
-    fun getPaymentMethodById(paymentId: Int): PaymentMethod? {
-        val db = getDatabase()
-        val cursor = db.rawQuery(
-            """
-            SELECT id, userId, cardNumber, expiry, name 
-            FROM ${DatabaseSchema.PM_TABLE_NAME} 
-            WHERE id = ?
-            """,
-            arrayOf(paymentId.toString())
-        )
-
-        var paymentMethod: PaymentMethod? = null
-        if (cursor.moveToFirst()) {
-            paymentMethod = PaymentMethod(
-                id = cursor.getInt(cursor.getColumnIndexOrThrow("id")),
-                userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
-                cardNumber = cursor.getString(cursor.getColumnIndexOrThrow("cardNumber")),
-                expiry = cursor.getString(cursor.getColumnIndexOrThrow("expiry")),
-                name = cursor.getString(cursor.getColumnIndexOrThrow("name"))
-            )
-        }
-
-        cursor.close()
-        db.close()
-        return paymentMethod
-    }
-
-    fun updatePaymentMethod(paymentMethod: PaymentMethod): Boolean {
-        val db = getDatabase()
-        return try {
-            db.execSQL(
-                """
-                UPDATE ${DatabaseSchema.PM_TABLE_NAME} 
-                SET cardNumber = ?, expiry = ?, name = ? 
-                WHERE id = ?
-                """,
-                arrayOf(
-                    paymentMethod.cardNumber,
-                    paymentMethod.expiry,
-                    paymentMethod.name,
-                    paymentMethod.id.toString()
-                )
-            )
-            db.close()
-            true
-        } catch (e: Exception) {
-            print("Error: $e")
-            db.close()
-            false
-        }
-    }
-
-    fun deletePaymentMethod(paymentId: Int): Boolean {
-        val db = getDatabase()
-        return try {
-            db.execSQL(
-                "DELETE FROM ${DatabaseSchema.PM_TABLE_NAME} WHERE userId = ?",
-                arrayOf(paymentId.toString())
-            )
-            db.close()
-            true
-        } catch (e: Exception) {
-            print("Error: $e")
-            db.close()
-            false
-        }
     }
 }
 

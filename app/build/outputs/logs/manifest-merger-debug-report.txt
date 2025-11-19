@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:1-31:12
-INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:1-31:12
-INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:1-31:12
-INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:1-31:12
+ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:1-30:12
+INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:1-30:12
+INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:1-30:12
+INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:1-30:12
 MERGED from [io.coil-kt:coil-compose:2.3.0] C:\Users\Torrent\.gradle\caches\8.13\transforms\cd3daa07025e3f11105e466d1a1d189b\transformed\coil-compose-2.3.0\AndroidManifest.xml:2:1-7:12
 MERGED from [io.coil-kt:coil-compose-base:2.3.0] C:\Users\Torrent\.gradle\caches\8.13\transforms\93286ccb2a08ce33669b5715aa7b16c8\transformed\coil-compose-base-2.3.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.accompanist:accompanist-drawablepainter:0.30.0] C:\Users\Torrent\.gradle\caches\8.13\transforms\23a121a6d4c411ca1259245e59035b70\transformed\accompanist-drawablepainter-0.30.0\AndroidManifest.xml:17:1-25:12
@@ -80,8 +80,8 @@ MERGED from [androidx.window.extensions.core:core:1.0.0] C:\Users\Torrent\.gradl
 	xmlns:android
 		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:2:11-69
 application
-ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:5:5-29:19
-INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:5:5-29:19
+ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:5:5-28:19
+INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:5:5-28:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.0] C:\Users\Torrent\.gradle\caches\8.13\transforms\513a37a0e8f8e851dbf59af332a49c69\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.0] C:\Users\Torrent\.gradle\caches\8.13\transforms\513a37a0e8f8e851dbf59af332a49c69\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.7.0] C:\Users\Torrent\.gradle\caches\8.13\transforms\ddb0cd7fe8a11608f95814864101fc05\transformed\ui-test-manifest-1.7.0\AndroidManifest.xml:22:5-26:19
@@ -129,25 +129,23 @@ ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\Andr
 	android:name
 		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:15:13-45
 activity#com.example.a3310_project.MainActivity
-ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:18:9-28:20
-	android:label
-		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:21:13-45
+ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:18:9-27:20
 	android:exported
 		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:20:13-36
 	android:theme
-		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:22:13-55
+		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:21:13-55
 	android:name
 		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:19:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:23:13-27:29
+ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:22:13-26:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:24:17-69
+ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:23:17-69
 	android:name
-		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:24:25-66
+		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:23:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:26:17-77
+ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:25:17-77
 	android:name
-		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:26:27-74
+		ADDED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml:25:27-74
 uses-sdk
 INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\Torrent\AndroidStudioProjects\3310_Project\app\src\main\AndroidManifest.xml

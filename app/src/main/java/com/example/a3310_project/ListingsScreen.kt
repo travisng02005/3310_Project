@@ -136,9 +136,12 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(entries, key = { it.id }) { entry ->
-                        EntryCard(
-                            entry = entry,
-                            onEditClick = { entryToEdit = entry }
+                        TicketCard(
+                            title = entry.name,
+                            description = entry.description.toString(),
+                            price = entry.price.toDouble(),
+                            seller = entry.userId,
+                            onPurchaseClick = { entryToEdit = entry }
                         )
                     }
                 }
@@ -203,53 +206,53 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
     }
 }
 
-@Composable
-fun EntryCard(
-    entry: TicketEntry,
-    onEditClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Ticket ID: ${entry.id}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = entry.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-                entry.description?.let { desc ->
-                    Text(
-                        text = desc,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-
-            IconButton(onClick = onEditClick) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit"
-                )
-            }
-        }
-    }
-}
+//@Composable
+//fun EntryCard(
+//    entry: TicketEntry,
+//    onEditClick: () -> Unit,
+//    modifier: Modifier = Modifier
+//) {
+//    Card(
+//        modifier = modifier.fillMaxWidth(),
+//        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+//    ) {
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(16.dp),
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Column(modifier = Modifier.weight(1f)) {
+//                Text(
+//                    text = "Ticket ID: ${entry.id}",
+//                    style = MaterialTheme.typography.labelMedium,
+//                    color = MaterialTheme.colorScheme.primary
+//                )
+//                Text(
+//                    text = entry.name,
+//                    style = MaterialTheme.typography.titleLarge,
+//                    modifier = Modifier.padding(top = 4.dp)
+//                )
+//                entry.description?.let { desc ->
+//                    Text(
+//                        text = desc,
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                        modifier = Modifier.padding(top = 4.dp)
+//                    )
+//                }
+//            }
+//
+//            IconButton(onClick = onEditClick) {
+//                Icon(
+//                    imageVector = Icons.Default.Edit,
+//                    contentDescription = "Edit"
+//                )
+//            }
+//        }
+//    }
+//}
 @Composable
 fun EditDialog(
     entry: TicketEntry,
