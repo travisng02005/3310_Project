@@ -11,114 +11,13 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.platform.LocalContext
-import android.database.sqlite.SQLiteDatabase
-import android.content.Context
-import android.database.Cursor
+import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class UserEntry(
-    val id: Int,
-    val userId: String,
-    val name: String,
-    val description: String? = null
-)
-class DatabaseHelper(private val context: Context) {
-
-    // Open your existing database
-    private fun getDatabase(): SQLiteDatabase {
-        // Replace with your actual database path/name
-        val dbPath = context.getDatabasePath("example_db.db").path
-        return SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READWRITE)
-    }
-
-    // Get all entries for a specific user
-    fun getEntriesByUserId(userId: String): List<UserEntry> {
-        val db = getDatabase()
-        val entries = mutableListOf<UserEntry>()
-
-        // Direct SQL query
-        val cursor: Cursor = db.rawQuery(
-            "SELECT id, userId, name, description FROM example_table WHERE userId = ?",
-            arrayOf(userId)
-        )
-
-        // Parse each row
-        while (cursor.moveToNext()) {
-            val id = cursor.getInt(cursor.getColumnIndex("id"))
-            val userIdCol = cursor.getString(cursor.getColumnIndex("userId"))
-            val name = cursor.getString(cursor.getColumnIndex("name"))
-            val description = cursor.getString(cursor.getColumnIndex("description"))
-
-            entries.add(
-                UserEntry(
-                    id = id,
-                    userId = userIdCol,
-                    name = name,
-                    description = description
-                )
-            )
-        }
-
-        cursor.close()
-        db.close()
-
-        return entries
-    }
-
-    // Update an entry
-    fun updateEntry(entry: UserEntry): Boolean {
-        val db = getDatabase()
-
-        val updateQuery = """
-            UPDATE example_table
-            SET name = ?, description = ?
-            WHERE id = ?
-        """
-
-        return try {
-            db.execSQL(updateQuery, arrayOf(entry.name, entry.description, entry.id))
-            db.close()
-            true
-        } catch (e: Exception) {
-            db.close()
-            false
-        }
-    }
-
-    // Delete an entry
-    fun deleteEntry(entryId: Int): Boolean {
-        val db = getDatabase()
-
-        return try {
-            db.execSQL("DELETE FROM example_table WHERE id = ?", arrayOf(entryId))
-            db.close()
-            true
-        } catch (e: Exception) {
-            db.close()
-            false
-        }
-    }
-
-    // Insert new entry
-    fun insertEntry(userId: String, name: String, description: String): Boolean {
-        val db = getDatabase()
-
-        return try {
-            db.execSQL(
-                "INSERT INTO example_table (userId, name, description) VALUES (?, ?, ?)",
-                arrayOf(userId, name, description)
-            )
-            db.close()
-            true
-        } catch (e: Exception) {
-            db.close()
-            false
-        }
-    }
-}
 @Composable
 fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
     val context = LocalContext.current
@@ -128,6 +27,7 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
     var isLoading by remember { mutableStateOf(true) }
     var entryToEdit by remember { mutableStateOf<UserEntry?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
 
@@ -139,6 +39,9 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
             }
             isLoading = false
         }
+    }
+    LaunchedEffect(searchQuery) {
+        entries = dbHelper.searchEntries(searchQuery)
     }
 
     Scaffold(
@@ -153,7 +56,7 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
         Box(modifier = modifier.fillMaxSize().padding(innerPadding)) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Text(
-                    text = "My Entries",
+                    text = "My Listings",
                     style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -179,19 +82,29 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("No entries found")
+                            Text("No listings found")
                             Text(
-                                text = "Click + to add your first entry",
+                                text = "Click + to add your first listing",
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.padding(top = 8.dp)
                             )
                         }
                     }
                 } else {
+
                     LazyColumn(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        item {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Search your listings") }
+                            )
+                        }
+
                         items(entries, key = { it.id }) { entry ->
                             EntryCard(
                                 entry = entry,
@@ -234,10 +147,10 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
             if (showAddDialog) {
                 AddEntryDialog(
                     onDismiss = { showAddDialog = false },
-                    onAdd = { name, description ->
+                    onAdd = { name, price, description ->
                         scope.launch {
                             withContext(Dispatchers.IO) {
-                                dbHelper.insertEntry(userId, name, description)
+                                dbHelper.insertEntry(userId, name, price.toString(), description)
                             }
                             entries = withContext(Dispatchers.IO) {
                                 dbHelper.getEntriesByUserId(userId)
@@ -302,11 +215,13 @@ fun EditDialog(
     entry: UserEntry,
     onDismiss: () -> Unit,
     onSave: (UserEntry) -> Unit,
-    onDelete: () -> Unit  // ← Add delete callback
+    onDelete: () -> Unit
 ) {
     var editedName by remember { mutableStateOf(entry.name) }
+    var editedPrice by remember { mutableStateOf(entry.price.toString()) }
     var editedDescription by remember { mutableStateOf(entry.description ?: "") }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var priceError by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -316,8 +231,29 @@ fun EditDialog(
                 OutlinedTextField(
                     value = editedName,
                     onValueChange = { editedName = it },
-                    label = { Text("Name") },
+                    label = { Text("Artist") },
                     modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = editedPrice,
+                    onValueChange = { newValue ->
+                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
+                            editedPrice = newValue
+                        }
+                        priceError = newValue.toFloatOrNull() == null && newValue.isNotEmpty()
+                    },
+                    label = { Text("Price") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    isError = priceError,
+                    supportingText = {
+                        if (priceError) {
+                            Text("Please enter a valid price")
+                        }
+                    },
+                    prefix = { Text("$") }
                 )
 
                 OutlinedTextField(
@@ -348,11 +284,12 @@ fun EditDialog(
                     onSave(
                         entry.copy(
                             name = editedName,
-                            description = editedDescription
+                            price = editedPrice.toFloatOrNull() ?: 0f,
+                            description = editedDescription,
                         )
                     )
                 },
-                enabled = editedName.isNotBlank()
+                enabled = editedName.isNotBlank() && editedPrice.toFloatOrNull() != null
             ) {
                 Text("Save")
             }
@@ -394,10 +331,12 @@ fun EditDialog(
 @Composable
 fun AddEntryDialog(
     onDismiss: () -> Unit,
-    onAdd: (String, String) -> Unit  // name, description
+    onAdd: (String, Float, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var priceError by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -413,6 +352,27 @@ fun AddEntryDialog(
                 )
 
                 OutlinedTextField(
+                    value = price,
+                    onValueChange = { newValue ->
+                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
+                            price = newValue
+                        }
+                        priceError = newValue.toFloatOrNull() == null && newValue.isNotEmpty()
+                    },
+                    label = { Text("Price") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    isError = priceError,
+                    supportingText = {
+                        if (priceError) {
+                            Text("Please enter a valid price")
+                        }
+                    },
+                    prefix = { Text("$") }
+                )
+
+                OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Description") },
@@ -425,9 +385,9 @@ fun AddEntryDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onAdd(name, description)
+                    onAdd(name, price.toFloatOrNull() ?: 0f, description)
                 },
-                enabled = name.isNotBlank()
+                enabled = name.isNotBlank() && price.toFloatOrNull() != null
             ) {
                 Text("Add")
             }
