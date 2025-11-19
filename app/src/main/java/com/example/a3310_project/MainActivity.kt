@@ -81,7 +81,7 @@ enum class AppDestinations(
     val icon: ImageVector,
 ) {
     HOME("Home", Icons.Default.Home),
-    LISTINGS("Listings", Icons.Default.Menu),
+    LISTINGS("My Tickets", Icons.Default.Menu),
     PROFILE("Profile", Icons.Default.AccountBox),
 }
 

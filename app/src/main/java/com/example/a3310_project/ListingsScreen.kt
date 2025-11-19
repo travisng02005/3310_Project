@@ -59,14 +59,12 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Header - OUTSIDE of conditional
             Text(
-                text = "My Listings",
+                text = "My Tickets",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(16.dp)
             )
 
-            // Search Bar - ALWAYS VISIBLE
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -89,7 +87,6 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Count - ALWAYS VISIBLE
             Text(
                 text = if (searchQuery.isEmpty()) {
                     "Total: ${entries.size}"
@@ -102,7 +99,6 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Content Area
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -226,7 +222,7 @@ fun EntryCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "ID: ${entry.id}",
+                    text = "Ticket ID: ${entry.id}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -310,7 +306,6 @@ fun EditDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Delete button at bottom of dialog
                 OutlinedButton(
                     onClick = { showDeleteConfirmation = true },
                     modifier = Modifier.fillMaxWidth(),
@@ -349,8 +344,8 @@ fun EditDialog(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Entry?") },
-            text = { Text("Are you sure you want to delete \"${entry.name}\"? This action cannot be undone.") },
+            title = { Text("Delete ticket?") },
+            text = { Text("Are you sure you want to delete the listing for \"${entry.name}\"? This action cannot be undone.") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -421,7 +416,7 @@ fun AddEntryDialog(
                     onValueChange = { description = it },
                     label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter description") },
+                    placeholder = { Text("Enter description, e.g. genre, location, section number.") },
                     minLines = 3
                 )
             }
@@ -443,3 +438,4 @@ fun AddEntryDialog(
         }
     )
 }
+
