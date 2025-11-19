@@ -31,27 +31,16 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
 
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(userId) {
-        scope.launch {
-            isLoading = true
-            entries = withContext(Dispatchers.IO) {
-                dbHelper.getEntriesByUserId(userId)
-            }
-            isLoading = false
-        }
-    }
     LaunchedEffect(userId, searchQuery) {
-        scope.launch {
-            isLoading = true
-            entries = withContext(Dispatchers.IO) {
-                if (searchQuery.isEmpty()) {
-                    dbHelper.getEntriesByUserId(userId)
-                } else {
-                    dbHelper.searchTicketEntries(userId, searchQuery)  // ✅ Pass userId
-                }
+        isLoading = true
+        entries = withContext(Dispatchers.IO) {
+            if (searchQuery.isEmpty()) {
+                dbHelper.getEntriesByUserId(userId)
+            } else {
+                dbHelper.searchTicketEntries(userId, searchQuery)
             }
-            isLoading = false
         }
+        isLoading = false
     }
 
     Scaffold(
