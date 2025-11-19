@@ -12,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.Dispatchers
@@ -52,116 +54,159 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
             }
         }
     ) { innerPadding ->
-        Box(modifier = modifier.fillMaxSize().padding(innerPadding)) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = "My Listings",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            // Header - OUTSIDE of conditional
+            Text(
+                text = "My Listings",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(16.dp)
+            )
 
-                Text(
-                    text = "Total: ${entries.size}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+            // Search Bar - ALWAYS VISIBLE
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                placeholder = { Text("Search your listings") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = "Search")
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        }
                     }
-                } else if (entries.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                },
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Count - ALWAYS VISIBLE
+            Text(
+                text = if (searchQuery.isEmpty()) {
+                    "Total: ${entries.size}"
+                } else {
+                    "Found: ${entries.size} results"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Content Area
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (entries.isEmpty()) {
+                // Empty state
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (searchQuery.isEmpty()) {
                             Text("No listings found")
                             Text(
                                 text = "Click + to add your first listing",
                                 style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.padding(top = 8.dp)
                             )
-                        }
-                    }
-                } else {
-
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        item {
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Search your listings") }
-                            )
-                        }
-
-                        items(entries, key = { it.id }) { entry ->
-                            EntryCard(
-                                entry = entry,
-                                onEditClick = { entryToEdit = entry }
-                            )
+                        } else {
+                            Text("No results for \"$searchQuery\"")
+                            TextButton(onClick = { searchQuery = "" }) {
+                                Text("Clear search")
+                            }
                         }
                     }
                 }
-            }
-
-            entryToEdit?.let { entry ->
-                EditDialog(
-                    entry = entry,
-                    onDismiss = { entryToEdit = null },
-                    onSave = { updatedEntry ->
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                dbHelper.updateTicket(updatedEntry)
-                            }
-                            entries = withContext(Dispatchers.IO) {
-                                dbHelper.getEntriesByUserId(userId)
-                            }
-                            entryToEdit = null
-                        }
-                    },
-                    onDelete = {
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                dbHelper.deleteTicket(entry.id)
-                            }
-                            entries = withContext(Dispatchers.IO) {
-                                dbHelper.getEntriesByUserId(userId)
-                            }
-                            entryToEdit = null
-                        }
+            } else {
+                // List of entries
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(entries, key = { it.id }) { entry ->
+                        EntryCard(
+                            entry = entry,
+                            onEditClick = { entryToEdit = entry }
+                        )
                     }
-                )
+                }
             }
+        }
 
-            if (showAddDialog) {
-                AddEntryDialog(
-                    onDismiss = { showAddDialog = false },
-                    onAdd = { name, price, description ->
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                dbHelper.insertTicket(userId, name, price.toString(), description)
-                            }
-                            entries = withContext(Dispatchers.IO) {
-                                dbHelper.getEntriesByUserId(userId)
-                            }
-                            showAddDialog = false
+        // Dialogs
+        entryToEdit?.let { entry ->
+            EditDialog(
+                entry = entry,
+                onDismiss = { entryToEdit = null },
+                onSave = { updatedEntry ->
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            dbHelper.updateTicket(updatedEntry)
                         }
+                        entries = withContext(Dispatchers.IO) {
+                            if (searchQuery.isEmpty()) {
+                                dbHelper.getEntriesByUserId(userId)
+                            } else {
+                                dbHelper.searchTicketEntries(userId, searchQuery)
+                            }
+                        }
+                        entryToEdit = null
                     }
-                )
-            }
+                },
+                onDelete = {
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            dbHelper.deleteTicket(entry.id)
+                        }
+                        entries = withContext(Dispatchers.IO) {
+                            if (searchQuery.isEmpty()) {
+                                dbHelper.getEntriesByUserId(userId)
+                            } else {
+                                dbHelper.searchTicketEntries(userId, searchQuery)
+                            }
+                        }
+                        entryToEdit = null
+                    }
+                }
+            )
+        }
+
+        if (showAddDialog) {
+            AddEntryDialog(
+                onDismiss = { showAddDialog = false },
+                onAdd = { name, price, description ->
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            dbHelper.insertTicket(userId, name, price.toString(), description)
+                        }
+                        searchQuery = ""
+                        entries = withContext(Dispatchers.IO) {
+                            dbHelper.getEntriesByUserId(userId)
+                        }
+                        showAddDialog = false
+                    }
+                }
+            )
         }
     }
 }
+
 @Composable
 fun EntryCard(
     entry: TicketEntry,
