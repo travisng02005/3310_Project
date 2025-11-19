@@ -40,8 +40,18 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
             isLoading = false
         }
     }
-    LaunchedEffect(searchQuery) {
-        entries = dbHelper.searchTicketEntries(searchQuery)
+    LaunchedEffect(userId, searchQuery) {
+        scope.launch {
+            isLoading = true
+            entries = withContext(Dispatchers.IO) {
+                if (searchQuery.isEmpty()) {
+                    dbHelper.getEntriesByUserId(userId)
+                } else {
+                    dbHelper.searchTicketEntries(userId, searchQuery)  // ✅ Pass userId
+                }
+            }
+            isLoading = false
+        }
     }
 
     Scaffold(

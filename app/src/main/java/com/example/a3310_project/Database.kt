@@ -41,7 +41,7 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
         // Create profile table
         val createProfileTableQuery = """
         CREATE TABLE $PROFILES_TABLE_NAME (
-            username TEXT PRIMARY KEY,
+            userId TEXT PRIMARY KEY,
             password TEXT NOT NULL
         )
     """
@@ -54,7 +54,7 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
             cardNumber double NOT NULL,
             expiry TEXT NOT NULL,
             name TEXT,
-            FOREIGN KEY (userId) REFERENCES $PROFILES_TABLE_NAME(username)
+            FOREIGN KEY (userId) REFERENCES $PROFILES_TABLE_NAME(userId)
                 ON DELETE CASCADE
                 ON UPDATE CASCADE
         )
@@ -63,13 +63,13 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
 
         // Create tickets table with foreign key reference
         val createPMTableQuery = """
-        CREATE TABLE $TICKETS_TABLE_NAME (
+        CREATE TABLE $PM_TABLE_NAME (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             userId TEXT NOT NULL,
             name TEXT NOT NULL,
             price INTEGER NOT NULL,
             description TEXT,
-            FOREIGN KEY (userId) REFERENCES $PROFILES_TABLE_NAME(username)
+            FOREIGN KEY (userId) REFERENCES $PROFILES_TABLE_NAME(userId)
                 ON DELETE CASCADE
                 ON UPDATE CASCADE
         )
@@ -280,20 +280,34 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             false
         }
     }
-    fun searchTicketEntries(query: String): List<TicketEntry> {
-        val entries = mutableListOf<TicketEntry>()
+    fun searchTicketEntries(userId: String, query: String): List<TicketEntry> {
         val db = getDatabase()
+        val entries = mutableListOf<TicketEntry>()
+
         val cursor = db.rawQuery(
-            "SELECT * FROM entries WHERE name LIKE ? ORDER BY id DESC",
-            arrayOf("%$query%")
+            """
+            SELECT id, userId, name, price, description 
+            FROM ${DatabaseSchema.TICKETS_TABLE_NAME} 
+            WHERE userId = ? AND (name LIKE ? OR description LIKE ?)
+            ORDER BY id DESC
+            """,
+            arrayOf(userId, "%$query%", "%$query%")
         )
 
-        // Parse cursor into entries list
-        cursor.use {
-            while (it.moveToNext()) {
-                // Add entries to list
-            }
+        while (cursor.moveToNext()) {
+            entries.add(
+                TicketEntry(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow("id")),
+                    userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
+                    name = cursor.getString(cursor.getColumnIndexOrThrow("name")),
+                    price = cursor.getFloat(cursor.getColumnIndexOrThrow("price")),
+                    description = cursor.getString(cursor.getColumnIndexOrThrow("description"))
+                )
+            )
         }
+
+        cursor.close()
+        db.close()
         return entries
     }
 
