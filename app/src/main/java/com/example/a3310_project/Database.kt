@@ -31,7 +31,7 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
     
     companion object {
         const val DATABASE_NAME = "example_app.db"
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 2
         const val TICKETS_TABLE_NAME = "ticket_entries"
         const val PROFILES_TABLE_NAME = "account_entries"
         const val PM_TABLE_NAME = "payment_method_entries"
@@ -49,7 +49,7 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
 
         // Create tickets table with foreign key reference
         val createTicketTableQuery = """
-        CREATE TABLE $TICKETS_TABLE_NAME (
+        CREATE TABLE $PM_TABLE_NAME (
             userId TEXT PRIMARY KEY,
             cardNumber double NOT NULL,
             expiry TEXT NOT NULL,
@@ -63,7 +63,7 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
 
         // Create tickets table with foreign key reference
         val createPMTableQuery = """
-        CREATE TABLE $PM_TABLE_NAME (
+        CREATE TABLE $TICKETS_TABLE_NAME (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             userId TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -75,9 +75,9 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
         )
     """
         db.execSQL(createPMTableQuery)
-        
+
         // Insert sample data
-        //insertSampleData(db)
+        insertSampleData(db)
     }
     
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -85,6 +85,21 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
         db.execSQL("DROP TABLE IF EXISTS $PROFILES_TABLE_NAME")
         db.execSQL("DROP TABLE IF EXISTS $TICKETS_TABLE_NAME")
         onCreate(db)
+    }
+
+    private fun insertSampleData(db: SQLiteDatabase) {
+        // Sample profiles
+        db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (userId, password) VALUES ('user123', 'pass123')")
+
+        // Sample tickets for user123
+        db.execSQL("""
+        INSERT INTO $TICKETS_TABLE_NAME (userId, name, price, description) 
+        VALUES ('user123', 'Concert Ticket', 59.99, 'VIP access')
+    """)
+        db.execSQL("""
+        INSERT INTO $TICKETS_TABLE_NAME (userId, name, price, description) 
+        VALUES ('user123', 'Movie Ticket', 12.50, 'IMAX screening')
+    """)
     }
 }
 
