@@ -41,7 +41,7 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
         }
     }
     LaunchedEffect(searchQuery) {
-        entries = dbHelper.searchEntries(searchQuery)
+        entries = dbHelper.searchTicketEntries(searchQuery)
     }
 
     Scaffold(
@@ -122,7 +122,7 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                     onSave = { updatedEntry ->
                         scope.launch {
                             withContext(Dispatchers.IO) {
-                                dbHelper.updateEntry(updatedEntry)
+                                dbHelper.updateTicket(updatedEntry)
                             }
                             entries = withContext(Dispatchers.IO) {
                                 dbHelper.getEntriesByUserId(userId)
@@ -133,7 +133,7 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                     onDelete = {
                         scope.launch {
                             withContext(Dispatchers.IO) {
-                                dbHelper.deleteEntry(entry.id)
+                                dbHelper.deleteTicket(entry.id)
                             }
                             entries = withContext(Dispatchers.IO) {
                                 dbHelper.getEntriesByUserId(userId)
@@ -150,7 +150,7 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                     onAdd = { name, price, description ->
                         scope.launch {
                             withContext(Dispatchers.IO) {
-                                dbHelper.insertEntry(userId, name, price.toString(), description)
+                                dbHelper.insertTicket(userId, name, price.toString(), description)
                             }
                             entries = withContext(Dispatchers.IO) {
                                 dbHelper.getEntriesByUserId(userId)
