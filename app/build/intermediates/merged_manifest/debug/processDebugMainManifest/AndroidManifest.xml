@@ -28,19 +28,8 @@
         android:testOnly="true"
         android:theme="@style/Theme._3310_Project" >
         <activity
-            android:name="com.example.a3310_project.Profile"
+            android:name="com.example.a3310_project.SettingsActivity"
             android:exported="false"
-            android:label="@string/title_activity_profile"
-            android:theme="@style/Theme._3310_Project" />
-        <activity
-            android:name="com.example.a3310_project.Database"
-            android:exported="false"
-            android:label="@string/title_activity_database"
-            android:theme="@style/Theme._3310_Project" />
-        <activity
-            android:name="com.example.a3310_project.Home"
-            android:exported="false"
-            android:label="@string/title_activity_home"
             android:theme="@style/Theme._3310_Project" />
         <activity
             android:name="com.example.a3310_project.MainActivity"
