@@ -137,6 +137,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.close()
             true
         } catch (e: Exception) {
+            print("Error: $e")
             db.close()
             false
         }
@@ -194,6 +195,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.close()
             true
         } catch (e: Exception) {
+            print("Error: $e")
             db.close()
             false
         }
@@ -210,6 +212,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.close()
             true
         } catch (e: Exception) {
+            print("Error: $e")
             db.close()
             false
         }
@@ -338,6 +341,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.close()
             true
         } catch (e: Exception) {
+            print("Error: $e")
             db.close()
             false
         }
@@ -418,6 +422,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.close()
             true
         } catch (e: Exception) {
+            print("Error: $e")
             db.close()
             false
         }
@@ -433,6 +438,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.close()
             true
         } catch (e: Exception) {
+            print("Error: $e")
             db.close()
             false
         }
