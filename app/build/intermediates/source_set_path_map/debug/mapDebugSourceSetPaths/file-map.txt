@@ -1,0 +1,59 @@
+com.example.a3310_project.app-animation-core-release-0 C:\Users\Jesst\.gradle\caches\8.13\transforms\024de0ae1b9d881b5699b38e378be724\transformed\animation-core-release\res
+com.example.a3310_project.app-ui-tooling-preview-release-1 C:\Users\Jesst\.gradle\caches\8.13\transforms\0675ed0059e49382a3f7fe5984192bfc\transformed\ui-tooling-preview-release\res
+com.example.a3310_project.app-annotation-experimental-1.4.1-2 C:\Users\Jesst\.gradle\caches\8.13\transforms\08321dbfa65b5c5dcf91b6280c8d35fe\transformed\annotation-experimental-1.4.1\res
+com.example.a3310_project.app-coil-base-2.3.0-3 C:\Users\Jesst\.gradle\caches\8.13\transforms\0b2c973897bb9067f31f5fe58b56e090\transformed\coil-base-2.3.0\res
+com.example.a3310_project.app-savedstate-compose-release-4 C:\Users\Jesst\.gradle\caches\8.13\transforms\0cc7872b28badcde7f78092f970813b5\transformed\savedstate-compose-release\res
+com.example.a3310_project.app-window-core-release-5 C:\Users\Jesst\.gradle\caches\8.13\transforms\19ddcc9c5c21df3e176f30d572ec6fe6\transformed\window-core-release\res
+com.example.a3310_project.app-ui-graphics-release-6 C:\Users\Jesst\.gradle\caches\8.13\transforms\24ac4536808d8e6e58bc2d5e98d6118e\transformed\ui-graphics-release\res
+com.example.a3310_project.app-ui-tooling-data-release-7 C:\Users\Jesst\.gradle\caches\8.13\transforms\29fff7416c2515de5cee5d4cc82eb1b2\transformed\ui-tooling-data-release\res
+com.example.a3310_project.app-customview-poolingcontainer-1.0.0-8 C:\Users\Jesst\.gradle\caches\8.13\transforms\2d194224f89b78789f5a6030cd9d775e\transformed\customview-poolingcontainer-1.0.0\res
+com.example.a3310_project.app-core-1.17.0-9 C:\Users\Jesst\.gradle\caches\8.13\transforms\35a4c77353ecd3697567118f42c31bc7\transformed\core-1.17.0\res
+com.example.a3310_project.app-lifecycle-runtime-release-10 C:\Users\Jesst\.gradle\caches\8.13\transforms\36d3d0615e4550100ca0abb29aa2eb01\transformed\lifecycle-runtime-release\res
+com.example.a3310_project.app-lifecycle-viewmodel-savedstate-release-11 C:\Users\Jesst\.gradle\caches\8.13\transforms\3f542dc0e64a5a4441b1cd0207bf9275\transformed\lifecycle-viewmodel-savedstate-release\res
+com.example.a3310_project.app-activity-ktx-1.11.0-12 C:\Users\Jesst\.gradle\caches\8.13\transforms\4132fdfe48285af3962748812dea1cbf\transformed\activity-ktx-1.11.0\res
+com.example.a3310_project.app-ui-util-release-13 C:\Users\Jesst\.gradle\caches\8.13\transforms\42426ef57a9e6327feb934ca00ae9d69\transformed\ui-util-release\res
+com.example.a3310_project.app-core-1.0.0-14 C:\Users\Jesst\.gradle\caches\8.13\transforms\4a6f4504ad100ea805b3d89b824edf39\transformed\core-1.0.0\res
+com.example.a3310_project.app-appcompat-resources-1.6.1-15 C:\Users\Jesst\.gradle\caches\8.13\transforms\4e2af179f860ca6348caaa5d1220a6dd\transformed\appcompat-resources-1.6.1\res
+com.example.a3310_project.app-datastore-preferences-1.0.0-16 C:\Users\Jesst\.gradle\caches\8.13\transforms\50a0caeaf54f51b5b5524f7a18b8213a\transformed\datastore-preferences-1.0.0\res
+com.example.a3310_project.app-ui-tooling-release-17 C:\Users\Jesst\.gradle\caches\8.13\transforms\513a37a0e8f8e851dbf59af332a49c69\transformed\ui-tooling-release\res
+com.example.a3310_project.app-animation-release-18 C:\Users\Jesst\.gradle\caches\8.13\transforms\57ebfd3639ccb77859ff606231e6697c\transformed\animation-release\res
+com.example.a3310_project.app-ui-release-19 C:\Users\Jesst\.gradle\caches\8.13\transforms\5816be4beeffbf58dea64d073095ebfe\transformed\ui-release\res
+com.example.a3310_project.app-window-1.3.0-20 C:\Users\Jesst\.gradle\caches\8.13\transforms\5dd7ef705de70ffb8b5591da058099f9\transformed\window-1.3.0\res
+com.example.a3310_project.app-graphics-path-1.0.1-21 C:\Users\Jesst\.gradle\caches\8.13\transforms\641b4ea74cf7c0475e978a75ae5bff18\transformed\graphics-path-1.0.1\res
+com.example.a3310_project.app-foundation-release-22 C:\Users\Jesst\.gradle\caches\8.13\transforms\6e651c86fea42e796c1abfd12ec1da38\transformed\foundation-release\res
+com.example.a3310_project.app-ui-geometry-release-23 C:\Users\Jesst\.gradle\caches\8.13\transforms\71217e2d79ab5cf99d900aaf92a4eb7f\transformed\ui-geometry-release\res
+com.example.a3310_project.app-profileinstaller-1.4.0-24 C:\Users\Jesst\.gradle\caches\8.13\transforms\7b008769d129bc4bccaeec3a2dfc4a93\transformed\profileinstaller-1.4.0\res
+com.example.a3310_project.app-material3-release-25 C:\Users\Jesst\.gradle\caches\8.13\transforms\7b827f9608f76d7a14260048ac143c07\transformed\material3-release\res
+com.example.a3310_project.app-activity-compose-1.11.0-26 C:\Users\Jesst\.gradle\caches\8.13\transforms\813df1cd3cc67cd8c683818aefa9b721\transformed\activity-compose-1.11.0\res
+com.example.a3310_project.app-ui-text-release-27 C:\Users\Jesst\.gradle\caches\8.13\transforms\84de95c22366ed807a6fb17785104783\transformed\ui-text-release\res
+com.example.a3310_project.app-foundation-layout-release-28 C:\Users\Jesst\.gradle\caches\8.13\transforms\86cf0a8bd724ba60a361f570105f4c26\transformed\foundation-layout-release\res
+com.example.a3310_project.app-material-release-29 C:\Users\Jesst\.gradle\caches\8.13\transforms\8c78ed3d8e97c9dee9270c1423550ce6\transformed\material-release\res
+com.example.a3310_project.app-emoji2-1.3.0-30 C:\Users\Jesst\.gradle\caches\8.13\transforms\8e181a6546861d3d118f73d056d61eae\transformed\emoji2-1.3.0\res
+com.example.a3310_project.app-lifecycle-process-2.9.4-31 C:\Users\Jesst\.gradle\caches\8.13\transforms\8fc2b3fbbd6f2d82c75afb73662f46a0\transformed\lifecycle-process-2.9.4\res
+com.example.a3310_project.app-lifecycle-viewmodel-release-32 C:\Users\Jesst\.gradle\caches\8.13\transforms\a2ff463afe72462eee8f2a1bb88e6f99\transformed\lifecycle-viewmodel-release\res
+com.example.a3310_project.app-material-icons-core-release-33 C:\Users\Jesst\.gradle\caches\8.13\transforms\a49650dcf5f24b6a4b7e62f2e6a5ee40\transformed\material-icons-core-release\res
+com.example.a3310_project.app-material3-adaptive-navigation-suite-release-34 C:\Users\Jesst\.gradle\caches\8.13\transforms\a514f1fdd376bc76546f06ef9477ad42\transformed\material3-adaptive-navigation-suite-release\res
+com.example.a3310_project.app-core-ktx-1.17.0-35 C:\Users\Jesst\.gradle\caches\8.13\transforms\a7d170219c3c6defcc58b893d41b9d92\transformed\core-ktx-1.17.0\res
+com.example.a3310_project.app-core-viewtree-1.0.0-36 C:\Users\Jesst\.gradle\caches\8.13\transforms\b7e60bd742a081d40fbd97126d58927d\transformed\core-viewtree-1.0.0\res
+com.example.a3310_project.app-activity-1.11.0-37 C:\Users\Jesst\.gradle\caches\8.13\transforms\c3f120c85b596d1cc322cd82905dfe95\transformed\activity-1.11.0\res
+com.example.a3310_project.app-datastore-1.0.0-38 C:\Users\Jesst\.gradle\caches\8.13\transforms\c538e02494b4131ab2eafae2613b780b\transformed\datastore-1.0.0\res
+com.example.a3310_project.app-core-runtime-2.2.0-39 C:\Users\Jesst\.gradle\caches\8.13\transforms\c680fd98d5d8631cea04cfcaead12300\transformed\core-runtime-2.2.0\res
+com.example.a3310_project.app-lifecycle-livedata-core-2.9.4-40 C:\Users\Jesst\.gradle\caches\8.13\transforms\c97591b75508f126876c51fe058924b8\transformed\lifecycle-livedata-core-2.9.4\res
+com.example.a3310_project.app-lifecycle-runtime-compose-release-41 C:\Users\Jesst\.gradle\caches\8.13\transforms\cada6f27395d489ac0f26ea5debaf931\transformed\lifecycle-runtime-compose-release\res
+com.example.a3310_project.app-savedstate-ktx-1.3.1-42 C:\Users\Jesst\.gradle\caches\8.13\transforms\cb7d7810b7bde1b3510fec680e7d2bdf\transformed\savedstate-ktx-1.3.1\res
+com.example.a3310_project.app-startup-runtime-1.1.1-43 C:\Users\Jesst\.gradle\caches\8.13\transforms\cbd74502802739c7e0602a6d9d067177\transformed\startup-runtime-1.1.1\res
+com.example.a3310_project.app-ui-unit-release-44 C:\Users\Jesst\.gradle\caches\8.13\transforms\d2f37493c7a83b48e2d92c6bff9d90bc\transformed\ui-unit-release\res
+com.example.a3310_project.app-savedstate-release-45 C:\Users\Jesst\.gradle\caches\8.13\transforms\d3757d354a68e8a741688931d0a1e05d\transformed\savedstate-release\res
+com.example.a3310_project.app-ui-test-manifest-1.7.0-46 C:\Users\Jesst\.gradle\caches\8.13\transforms\ddb0cd7fe8a11608f95814864101fc05\transformed\ui-test-manifest-1.7.0\res
+com.example.a3310_project.app-material-ripple-release-47 C:\Users\Jesst\.gradle\caches\8.13\transforms\de5da362060f7aa16dd3af38a39b7942\transformed\material-ripple-release\res
+com.example.a3310_project.app-tracing-1.2.0-48 C:\Users\Jesst\.gradle\caches\8.13\transforms\e0e6b6d7f9823ff5b0253fdd0a49142e\transformed\tracing-1.2.0\res
+com.example.a3310_project.app-adaptive-release-49 C:\Users\Jesst\.gradle\caches\8.13\transforms\f740befa868d305cf3eff4fdeeb0f13c\transformed\adaptive-release\res
+com.example.a3310_project.app-lifecycle-viewmodel-ktx-2.9.4-50 C:\Users\Jesst\.gradle\caches\8.13\transforms\fca93160057650171a601f0465bce6a6\transformed\lifecycle-viewmodel-ktx-2.9.4\res
+com.example.a3310_project.app-pngs-51 C:\Users\Jesst\Desktop\New folder (2)\TRY4\app\build\generated\res\pngs\debug
+com.example.a3310_project.app-resValues-52 C:\Users\Jesst\Desktop\New folder (2)\TRY4\app\build\generated\res\resValues\debug
+com.example.a3310_project.app-updated_navigation_xml-53 C:\Users\Jesst\Desktop\New folder (2)\TRY4\app\build\generated\updated_navigation_xml\debug
+com.example.a3310_project.app-packageDebugResources-54 C:\Users\Jesst\Desktop\New folder (2)\TRY4\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.example.a3310_project.app-packageDebugResources-55 C:\Users\Jesst\Desktop\New folder (2)\TRY4\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.example.a3310_project.app-debug-56 C:\Users\Jesst\Desktop\New folder (2)\TRY4\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.example.a3310_project.app-debug-57 C:\Users\Jesst\Desktop\New folder (2)\TRY4\app\src\debug\res
+com.example.a3310_project.app-main-58 C:\Users\Jesst\Desktop\New folder (2)\TRY4\app\src\main\res
