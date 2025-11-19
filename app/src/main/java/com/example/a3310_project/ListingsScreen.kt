@@ -23,9 +23,9 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
     val context = LocalContext.current
     val dbHelper = remember { DatabaseHelper(context) }
 
-    var entries by remember { mutableStateOf<List<UserEntry>>(emptyList()) }
+    var entries by remember { mutableStateOf<List<TicketEntry>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var entryToEdit by remember { mutableStateOf<UserEntry?>(null) }
+    var entryToEdit by remember { mutableStateOf<TicketEntry?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
@@ -165,7 +165,7 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
 }
 @Composable
 fun EntryCard(
-    entry: UserEntry,
+    entry: TicketEntry,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -212,9 +212,9 @@ fun EntryCard(
 }
 @Composable
 fun EditDialog(
-    entry: UserEntry,
+    entry: TicketEntry,
     onDismiss: () -> Unit,
-    onSave: (UserEntry) -> Unit,
+    onSave: (TicketEntry) -> Unit,
     onDelete: () -> Unit
 ) {
     var editedName by remember { mutableStateOf(entry.name) }
