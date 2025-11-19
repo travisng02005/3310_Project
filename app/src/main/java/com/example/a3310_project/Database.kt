@@ -86,36 +86,13 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
         db.execSQL("DROP TABLE IF EXISTS $TICKETS_TABLE_NAME")
         onCreate(db)
     }
-
-//    data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
-//    private fun insertSampleData(db: SQLiteDatabase) {
-//        val sampleEntries = listOf(
-//            Quad("user123", "taylor swift", "100", "Seat 78259"),
-//            Quad("user123", "sab carpenter", "200",  "Seat 5983"),
-//            Quad("user123", "clairo", "400",  "Seat 09852"),
-//            Quad("user123", "the marias", "300", "Seat 5346"),
-//            Quad("user123", "iu", "500", "Seat 3523"),
-//
-//            Quad("user456", "kali uchis", "150", "Seat 583"),
-//            Quad("user456", "kali uchis", "529", "Seat 451"),
-//            Quad("user456", "taylor swift", "560", "Seat 3032"),
-//
-//            // Sample entries for user789
-//            Quad("user789", "mariah carey", "420", "Seat 9520"),
-//            Quad("user789", "laufey", "250", "Seat 593")
-//        )
-//
-//        for ((userId, name, price, description) in sampleEntries) {
-//            db.execSQL(
-//                "INSERT INTO $TICKETS_TABLE_NAME (userId, name, price, description) VALUES (?, ?, ?, ?)",
-//                arrayOf(userId, name, price, description)
-//            )
-//        }
-//    }
-
 }
 
 // database helper functions
+// to use helper functions: include
+//      val dbHelper = remember { DatabaseHelper(context) }
+// then call functions using dbHelper.{function(arguments)}
+// dm me if you have problems :)
 class DatabaseHelper(@Suppress("unused") private val context: Context) {
 
     // profiles table helper functions //
