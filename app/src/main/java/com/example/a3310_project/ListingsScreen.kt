@@ -21,26 +21,44 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
+fun ListingsScreen(modifier: Modifier = Modifier, userId: String?) {
     val context = LocalContext.current
     val dbHelper = remember { DatabaseHelper(context) }
+    val userPreferences = remember { UserPreferences(context) }
 
     var entries by remember { mutableStateOf<List<TicketEntry>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var entryToEdit by remember { mutableStateOf<TicketEntry?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var showLoginPrompt by remember { mutableStateOf(false) }
+    var isLoggedIn by remember { mutableStateOf(false) }
+    var currentUserId by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(userId, searchQuery) {
+    // Check login status
+    LaunchedEffect(Unit) {
+        userPreferences.isLoggedInFlow.collect { loggedIn ->
+            isLoggedIn = loggedIn
+            if (loggedIn) {
+                userPreferences.loggedInUserIdFlow.collect { id ->
+                    currentUserId = id
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(currentUserId, searchQuery) {
         isLoading = true
         entries = withContext(Dispatchers.IO) {
-            if (searchQuery.isEmpty()) {
-                dbHelper.getEntriesByUserId(userId)
-            } else {
-                dbHelper.searchTicketEntries(userId, searchQuery)
-            }
+            currentUserId?.let { uid ->
+                if (searchQuery.isEmpty()) {
+                    dbHelper.getEntriesByUserId(uid)
+                } else {
+                    dbHelper.searchTicketEntries(uid, searchQuery)
+                }
+            } ?: emptyList()
         }
         isLoading = false
     }
@@ -48,7 +66,13 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddDialog = true }
+                onClick = {
+                    if (isLoggedIn) {
+                        showAddDialog = true
+                    } else {
+                        showLoginPrompt = true
+                    }
+                }
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Add Entry")
             }
@@ -65,90 +89,123 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                 modifier = Modifier.padding(16.dp)
             )
 
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                placeholder = { Text("Search your listings") },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = "Search")
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear")
-                        }
-                    }
-                },
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = if (searchQuery.isEmpty()) {
-                    "Total: ${entries.size}"
-                } else {
-                    "Found: ${entries.size} results"
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (entries.isEmpty()) {
-                // Empty state
+            if (!isLoggedIn) {
+                // Login prompt for non-logged-in users
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        if (searchQuery.isEmpty()) {
-                            Text("No listings found")
-                            Text(
-                                text = "Click + to add your first listing",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        } else {
-                            Text("No results for \"$searchQuery\"")
-                            TextButton(onClick = { searchQuery = "" }) {
-                                Text("Clear search")
-                            }
-                        }
-                    }
-                }
-            } else {
-                // List of entries
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(entries, key = { it.id }) { entry ->
-                        TicketCard(
-                            ticket = entry,
-                            onClick = { entryToEdit = entry }
+                        Text("Please log in to view your tickets")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Go to the Home screen to log in",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }
+            } else {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    placeholder = { Text("Search your listings") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            }
+                        }
+                    },
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = if (searchQuery.isEmpty()) {
+                        "Total: ${entries.size}"
+                    } else {
+                        "Found: ${entries.size} results"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (entries.isEmpty()) {
+                    // Empty state
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (searchQuery.isEmpty()) {
+                                Text("No listings found")
+                                Text(
+                                    text = "Click + to add your first listing",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            } else {
+                                Text("No results for \"$searchQuery\"")
+                                TextButton(onClick = { searchQuery = "" }) {
+                                    Text("Clear search")
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // List of entries
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(entries, key = { it.id }) { entry ->
+                            TicketCard(
+                                ticket = entry,
+                                onClick = { entryToEdit = entry }
+                            )
+                        }
+                    }
+                }
             }
+        }
+
+        // Login prompt dialog
+        if (showLoginPrompt) {
+            AlertDialog(
+                onDismissRequest = { showLoginPrompt = false },
+                title = { Text("Login Required") },
+                text = { Text("You must be logged in to add listings. Please go to the Home screen to login.") },
+                confirmButton = {
+                    Button(onClick = { showLoginPrompt = false }) {
+                        Text("OK")
+                    }
+                }
+            )
         }
 
         // Dialogs
         entryToEdit?.let { entry ->
             EditDialog(
                 entry = entry,
+                dbHelper = dbHelper,
                 onDismiss = { entryToEdit = null },
                 onSave = { updatedEntry ->
                     scope.launch {
@@ -156,11 +213,13 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                             dbHelper.updateTicket(updatedEntry)
                         }
                         entries = withContext(Dispatchers.IO) {
-                            if (searchQuery.isEmpty()) {
-                                dbHelper.getEntriesByUserId(userId)
-                            } else {
-                                dbHelper.searchTicketEntries(userId, searchQuery)
-                            }
+                            currentUserId?.let { uid ->
+                                if (searchQuery.isEmpty()) {
+                                    dbHelper.getEntriesByUserId(uid)
+                                } else {
+                                    dbHelper.searchTicketEntries(uid, searchQuery)
+                                }
+                            } ?: emptyList()
                         }
                         entryToEdit = null
                     }
@@ -171,11 +230,13 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
                             dbHelper.deleteTicket(entry.id)
                         }
                         entries = withContext(Dispatchers.IO) {
-                            if (searchQuery.isEmpty()) {
-                                dbHelper.getEntriesByUserId(userId)
-                            } else {
-                                dbHelper.searchTicketEntries(userId, searchQuery)
-                            }
+                            currentUserId?.let { uid ->
+                                if (searchQuery.isEmpty()) {
+                                    dbHelper.getEntriesByUserId(uid)
+                                } else {
+                                    dbHelper.searchTicketEntries(uid, searchQuery)
+                                }
+                            } ?: emptyList()
                         }
                         entryToEdit = null
                     }
@@ -183,17 +244,20 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
             )
         }
 
-        if (showAddDialog) {
+        if (showAddDialog && isLoggedIn) {
             AddEntryDialog(
+                dbHelper = dbHelper,
                 onDismiss = { showAddDialog = false },
                 onAdd = { name, price, description ->
                     scope.launch {
-                        withContext(Dispatchers.IO) {
-                            dbHelper.insertTicket(userId, name, price.toString(), description)
-                        }
-                        searchQuery = ""
-                        entries = withContext(Dispatchers.IO) {
-                            dbHelper.getEntriesByUserId(userId)
+                        currentUserId?.let { uid ->
+                            withContext(Dispatchers.IO) {
+                                dbHelper.insertTicket(uid, name, price.toString(), description)
+                            }
+                            searchQuery = ""
+                            entries = withContext(Dispatchers.IO) {
+                                dbHelper.getEntriesByUserId(uid)
+                            }
                         }
                         showAddDialog = false
                     }
@@ -202,9 +266,12 @@ fun ListingsScreen(modifier: Modifier = Modifier, userId: String) {
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditDialog(
     entry: TicketEntry,
+    dbHelper: DatabaseHelper,
     onDismiss: () -> Unit,
     onSave: (TicketEntry) -> Unit,
     onDelete: () -> Unit
@@ -214,18 +281,73 @@ fun EditDialog(
     var editedDescription by remember { mutableStateOf(entry.description ?: "") }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var priceError by remember { mutableStateOf(false) }
+    var eventError by remember { mutableStateOf("") }
+    var availableEvents by remember { mutableStateOf<List<UpcomingShow>>(emptyList()) }
+    var showEventDropdown by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+
+    // Load available events
+    LaunchedEffect(Unit) {
+        availableEvents = withContext(Dispatchers.IO) {
+            dbHelper.getAllUpcomingShows()
+        }
+    }
+
+    // Validate event exists
+    fun validateEvent(eventName: String): Boolean {
+        val exists = availableEvents.any { it.event.equals(eventName, ignoreCase = true) }
+        eventError = if (!exists) "Event must exist in upcoming shows" else ""
+        return exists
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Entry #${entry.id}") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = editedName,
-                    onValueChange = { editedName = it },
-                    label = { Text("Artist") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Event name dropdown
+                ExposedDropdownMenuBox(
+                    expanded = showEventDropdown,
+                    onExpandedChange = { showEventDropdown = it }
+                ) {
+                    OutlinedTextField(
+                        value = editedName,
+                        onValueChange = {
+                            editedName = it
+                            validateEvent(it)
+                        },
+                        label = { Text("Event *") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        isError = eventError.isNotEmpty(),
+                        supportingText = {
+                            if (eventError.isNotEmpty()) {
+                                Text(eventError)
+                            }
+                        },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showEventDropdown)
+                        }
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = showEventDropdown,
+                        onDismissRequest = { showEventDropdown = false }
+                    ) {
+                        availableEvents.forEach { show ->
+                            DropdownMenuItem(
+                                text = { Text("${show.event} (${show.date})") },
+                                onClick = {
+                                    editedName = show.event
+                                    validateEvent(show.event)
+                                    showEventDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
 
                 OutlinedTextField(
                     value = editedPrice,
@@ -272,15 +394,19 @@ fun EditDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onSave(
-                        entry.copy(
-                            name = editedName,
-                            price = editedPrice.toFloatOrNull() ?: 0f,
-                            description = editedDescription,
+                    if (validateEvent(editedName)) {
+                        onSave(
+                            entry.copy(
+                                name = editedName,
+                                price = editedPrice.toFloatOrNull() ?: 0f,
+                                description = editedDescription,
+                            )
                         )
-                    )
+                    }
                 },
-                enabled = editedName.isNotBlank() && editedPrice.toFloatOrNull() != null
+                enabled = editedName.isNotBlank() && 
+                         editedPrice.toFloatOrNull() != null && 
+                         eventError.isEmpty()
             ) {
                 Text("Save")
             }
@@ -319,8 +445,11 @@ fun EditDialog(
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEntryDialog(
+    dbHelper: DatabaseHelper,
     onDismiss: () -> Unit,
     onAdd: (String, Float, String) -> Unit
 ) {
@@ -328,19 +457,96 @@ fun AddEntryDialog(
     var price by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var priceError by remember { mutableStateOf(false) }
+    var eventError by remember { mutableStateOf("") }
+    var availableEvents by remember { mutableStateOf<List<UpcomingShow>>(emptyList()) }
+    var showEventDropdown by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+
+    // Load available events
+    LaunchedEffect(Unit) {
+        availableEvents = withContext(Dispatchers.IO) {
+            dbHelper.getAllUpcomingShows()
+        }
+    }
+
+    // Validate event exists
+    fun validateEvent(eventName: String): Boolean {
+        val exists = availableEvents.any { it.event.equals(eventName, ignoreCase = true) }
+        eventError = if (!exists && eventName.isNotEmpty()) "Event must exist in upcoming shows" else ""
+        return exists
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add New Entry") },
+        title = { Text("Add New Listing") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter entry name") }
+                Text(
+                    "Select an event from the upcoming shows to list your ticket",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                // Event name dropdown
+                ExposedDropdownMenuBox(
+                    expanded = showEventDropdown,
+                    onExpandedChange = { showEventDropdown = it }
+                ) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = {
+                            name = it
+                            validateEvent(it)
+                        },
+                        label = { Text("Event *") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        placeholder = { Text("Select or type event name") },
+                        isError = eventError.isNotEmpty(),
+                        supportingText = {
+                            if (eventError.isNotEmpty()) {
+                                Text(eventError)
+                            }
+                        },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showEventDropdown)
+                        }
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = showEventDropdown,
+                        onDismissRequest = { showEventDropdown = false }
+                    ) {
+                        if (availableEvents.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("No upcoming shows available") },
+                                onClick = { }
+                            )
+                        } else {
+                            availableEvents.forEach { show ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(show.event)
+                                            Text(
+                                                "${show.date} at ${show.time}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        name = show.event
+                                        validateEvent(show.event)
+                                        showEventDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
 
                 OutlinedTextField(
                     value = price,
@@ -350,7 +556,7 @@ fun AddEntryDialog(
                         }
                         priceError = newValue.toFloatOrNull() == null && newValue.isNotEmpty()
                     },
-                    label = { Text("Price") },
+                    label = { Text("Price *") },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -368,7 +574,7 @@ fun AddEntryDialog(
                     onValueChange = { description = it },
                     label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter description, e.g. genre, location, section number.") },
+                    placeholder = { Text("Enter description, e.g. section number, seat details") },
                     minLines = 3
                 )
             }
@@ -376,9 +582,13 @@ fun AddEntryDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onAdd(name, price.toFloatOrNull() ?: 0f, description)
+                    if (validateEvent(name)) {
+                        onAdd(name, price.toFloatOrNull() ?: 0f, description)
+                    }
                 },
-                enabled = name.isNotBlank() && price.toFloatOrNull() != null
+                enabled = name.isNotBlank() && 
+                         price.toFloatOrNull() != null && 
+                         eventError.isEmpty()
             ) {
                 Text("Add")
             }
@@ -390,4 +600,3 @@ fun AddEntryDialog(
         }
     )
 }
-

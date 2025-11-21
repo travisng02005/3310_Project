@@ -358,7 +358,7 @@ fun TicketCard(ticket: TicketEntry, onClick: () -> Unit) {
                 }
 
                 Text(
-                    text = "$${ticket.price}",
+                    text = "$${"%.2f".format(ticket.price)}",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
