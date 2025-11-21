@@ -16,27 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
-
-//class HomeActivity : ComponentActivity() {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        setContent {
-//            MaterialTheme {
-//                Surface(
-//                    modifier = Modifier.fillMaxSize(),
-//                    color = MaterialTheme.colorScheme.background
-//                ) {
-//                    MainScreen()
-//                }
-//            }
-//        }
-//    }
-//}
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
     val dbHelper = remember { DatabaseHelper(context) }
+    val userPreferences = remember { UserPreferences(context) }
+    val coroutineScope = rememberCoroutineScope()
     
     var isLoggedIn by remember { mutableStateOf(false) }
     var currentUser by remember { mutableStateOf<Profile?>(null) }
@@ -46,38 +33,50 @@ fun MainScreen() {
     var showAuthDialog by remember { mutableStateOf(false) }
     var showPostDialog by remember { mutableStateOf(false) }
     var authErrorMessage by remember { mutableStateOf("") }
+    var showLoginPrompt by remember { mutableStateOf(false) }
 
-
-    // Load all tickets from database
+    // Sample tickets data - now loaded from database
     var allTickets by remember { mutableStateOf<List<TicketEntry>>(emptyList()) }
-    
-    // Load tickets when screen first appears
+
+    // Check if user is logged in when screen loads
     LaunchedEffect(Unit) {
+        // Load tickets
         allTickets = dbHelper.getAllTickets()
+        
+        // Check for saved logged-in user
+        userPreferences.loggedInUserIdFlow.collect { userId ->
+            if (userId != null) {
+                val profile = dbHelper.getProfile(userId)
+                if (profile != null) {
+                    currentUser = profile
+                    isLoggedIn = true
+                }
+            }
+        }
     }
 
     // Filter tickets based on search query
     val filteredTickets = if (searchQuery.isEmpty()) {
         allTickets
     } else {
-        currentUser?.let { user ->
-            dbHelper.searchTicketEntries(user.userId, searchQuery)
-        } ?: allTickets.filter { ticket ->
+        allTickets.filter { ticket ->
             ticket.name.contains(searchQuery, ignoreCase = true) ||
             ticket.description?.contains(searchQuery, ignoreCase = true) == true
         }
     }
 
-    // Show purchase dialog if a ticket is selected
+    // Show purchase dialog if a ticket is selected (only if logged in)
     selectedTicket?.let { ticket ->
-        PurchaseDialog(
-            ticket = ticket,
-            onDismiss = { selectedTicket = null },
-            onPurchase = {
-                selectedTicket = null
-                showPaymentDialog = true
-            }
-        )
+        if (isLoggedIn) {
+            PurchaseDialog(
+                ticket = ticket,
+                onDismiss = { selectedTicket = null },
+                onPurchase = {
+                    selectedTicket = null
+                    showPaymentDialog = true
+                }
+            )
+        }
     }
 
     // Show payment dialog
@@ -104,6 +103,10 @@ fun MainScreen() {
                 isLoggedIn = true
                 showAuthDialog = false
                 authErrorMessage = ""
+                // Save logged-in user to preferences
+                coroutineScope.launch {
+                    userPreferences.saveLoggedInUser(user.userId)
+                }
             },
             onError = { message ->
                 authErrorMessage = message
@@ -112,24 +115,52 @@ fun MainScreen() {
         )
     }
 
-    // Show post ticket dialog
+    // Show post ticket dialog (only if logged in)
     if (showPostDialog) {
-        PostTicketDialog(
-            onDismiss = { showPostDialog = false },
-            onPost = { title, description, price ->
-                currentUser?.let { user ->
-                    val success = dbHelper.insertTicket(
-                        userId = user.userId,
-                        name = title,
-                        price = price.toString(),
-                        description = description
-                    )
-                    if (success) {
-                        // Reload tickets after posting
-                        allTickets = dbHelper.getEntriesByUserId("")
+        if (isLoggedIn) {
+            PostTicketDialog(
+                onDismiss = { showPostDialog = false },
+                onPost = { title, description, price ->
+                    currentUser?.let { user ->
+                        val success = dbHelper.insertTicket(
+                            userId = user.userId,
+                            name = title,
+                            price = price.toString(),
+                            description = description
+                        )
+                        if (success) {
+                            // Reload tickets after posting
+                            allTickets = dbHelper.getAllTickets()
+                        }
                     }
+                    showPostDialog = false
                 }
-                showPostDialog = false
+            )
+        }
+    }
+
+    // Show login prompt dialog for non-logged-in users trying to purchase
+    if (showLoginPrompt) {
+        AlertDialog(
+            onDismissRequest = { showLoginPrompt = false },
+            title = { Text("Login Required", fontWeight = FontWeight.Bold) },
+            text = { Text("You must be logged in to purchase tickets. Would you like to login now?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLoginPrompt = false
+                        showAuthDialog = true
+                    }
+                ) {
+                    Text("Login")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showLoginPrompt = false }
+                ) {
+                    Text("Cancel")
+                }
             }
         )
     }
@@ -235,6 +266,22 @@ fun MainScreen() {
                             Text("Post Ticket")
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Logout button
+                    OutlinedButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                userPreferences.clearLoggedInUser()
+                                currentUser = null
+                                isLoggedIn = false
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Logout")
+                    }
                 }
             }
         }
@@ -253,11 +300,14 @@ fun MainScreen() {
         LazyColumn {
             items(filteredTickets) { ticket ->
                 TicketCard(
-                    title = ticket.name,
-                    description = ticket.description.toString(),
-                    price = ticket.price.toDouble(),
-                    seller = ticket.userId,
-                    onPurchaseClick = { selectedTicket = ticket }
+                    ticket = ticket,
+                    onClick = {
+                        if (isLoggedIn) {
+                            selectedTicket = ticket
+                        } else {
+                            showLoginPrompt = true
+                        }
+                    }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -266,63 +316,52 @@ fun MainScreen() {
 }
 
 @Composable
-fun TicketCard(
-    title: String,
-    description: String,
-    price: Double,
-    seller: String,
-    onPurchaseClick: () -> Unit
-) {
+fun TicketCard(ticket: TicketEntry, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onPurchaseClick() },
+            .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp)
         ) {
-            // Ticket image placeholder
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(80.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text("🎫", style = MaterialTheme.typography.headlineMedium)
+                    Text(
+                        text = ticket.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = ticket.description ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Seller: ${ticket.userId}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
 
                 Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-
-                Text(
-                    text = "$$price",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = "Sold by: $seller",
-                    style = MaterialTheme.typography.labelSmall
+                    text = "$${ticket.price}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -518,14 +557,24 @@ fun AuthDialog(
             )
         },
         text = {
-            Column {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
                 if (errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 if (!isLoginMode) {
@@ -564,28 +613,27 @@ fun AuthDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Toggle between login and register
-                Text(
-                    text = if (isLoginMode) "Don't have an account? " else "Already have an account? ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.clickable {
-                        isLoginMode = !isLoginMode
-                        username = ""
-                        password = ""
-                        name = ""
-                    }
-                )
-                Text(
-                    text = if (isLoginMode) "Register" else "Login",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable {
-                        isLoginMode = !isLoginMode
-                        username = ""
-                        password = ""
-                        name = ""
-                    }
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = if (isLoginMode) "Don't have an account? " else "Already have an account? ",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = if (isLoginMode) "Register" else "Login",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable {
+                            isLoginMode = !isLoginMode
+                            username = ""
+                            password = ""
+                            name = ""
+                        }
+                    )
+                }
             }
         },
         confirmButton = {
@@ -651,7 +699,9 @@ fun PostTicketDialog(
         onDismissRequest = onDismiss,
         title = { Text("Sell Your Ticket", fontWeight = FontWeight.Bold) },
         text = {
-            Column {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
                 Text("Enter the details of the ticket you want to sell", style = MaterialTheme.typography.bodyMedium)
 
                 Spacer(modifier = Modifier.height(16.dp))
