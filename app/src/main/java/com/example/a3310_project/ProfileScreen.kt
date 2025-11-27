@@ -24,7 +24,14 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 
 @Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
+fun ProfileScreen(
+    modifier: Modifier = Modifier,
+    isLoggedIn: Boolean
+) {
+    if (!isLoggedIn) {
+        ProfileLoginPrompt(modifier)
+        return
+    }
 
     // --- Gallery State ---
     var galleryImages by remember { mutableStateOf(listOf<Uri>()) }
@@ -161,3 +168,29 @@ fun SettingsButton(modifier: Modifier = Modifier) {
         Text(text = "Settings")
     }
 }
+
+@Composable
+fun ProfileLoginPrompt(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Login or Register to view your profile",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            // Trigger your login dialog
+            // (You can lift showAuthDialog up to the navigation level)
+        }) {
+            Text("Login / Register")
+        }
+    }
+}
+

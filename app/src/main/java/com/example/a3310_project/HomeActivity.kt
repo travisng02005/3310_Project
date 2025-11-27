@@ -19,14 +19,18 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    modifier: Modifier = Modifier,
+    isLoggedIn: Boolean,
+    currentUser: Profile?,
+    onLogin: (Profile) -> Unit,
+    onLogout: () -> Unit
+) {
     val context = LocalContext.current
     val dbHelper = remember { DatabaseHelper(context) }
     val userPreferences = remember { UserPreferences(context) }
     val coroutineScope = rememberCoroutineScope()
     
-    var isLoggedIn by remember { mutableStateOf(false) }
-    var currentUser by remember { mutableStateOf<Profile?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedTicket by remember { mutableStateOf<TicketEntry?>(null) }
     var showPaymentDialog by remember { mutableStateOf(false) }
@@ -44,15 +48,9 @@ fun MainScreen() {
         allTickets = dbHelper.getAllTickets()
         
         // Check for saved logged-in user
-        userPreferences.loggedInUserIdFlow.collect { userId ->
-            if (userId != null) {
-                val profile = dbHelper.getProfile(userId)
-                if (profile != null) {
-                    currentUser = profile
-                    isLoggedIn = true
-                }
-            }
-        }
+
+
+
     }
 
     // Filter tickets based on search query
@@ -99,8 +97,8 @@ fun MainScreen() {
                 authErrorMessage = ""
             },
             onLoginSuccess = { user ->
-                currentUser = user
-                isLoggedIn = true
+                onLogin(user)
+
                 showAuthDialog = false
                 authErrorMessage = ""
                 // Save logged-in user to preferences
@@ -274,8 +272,8 @@ fun MainScreen() {
                         onClick = {
                             coroutineScope.launch {
                                 userPreferences.clearLoggedInUser()
-                                currentUser = null
-                                isLoggedIn = false
+                                onLogout()
+
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
