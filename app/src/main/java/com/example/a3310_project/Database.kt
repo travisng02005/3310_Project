@@ -32,7 +32,16 @@ data class PaymentMethod(
     val cardNumber: String,
     val expiry: String,
     val cvv: String
-)
+) {
+    // Returns masked card number for display (e.g., "**** **** **** 1234")
+    fun getMaskedCardNumber(): String {
+        return if (cardNumber.length >= 4) {
+            "**** **** **** ${cardNumber.takeLast(4)}"
+        } else {
+            cardNumber
+        }
+    }
+}
 
 data class UpcomingShow(
     val showId: Int,
@@ -461,6 +470,45 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         db.close()
         return entries
     }
+    fun purchaseTicket(ticket: TicketEntry, buyerId: String): Boolean {
+        val db = getDatabase()
+
+        return try {
+            db.beginTransaction()
+
+            // 1. Insert into purchased_tickets table
+            db.execSQL(
+                """
+            INSERT INTO ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME} 
+            (id, userId, event, price, description, buyerId) 
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+                arrayOf(
+                    ticket.id.toString(),
+                    ticket.userId,           // Original seller's userId
+                    ticket.name,             // Event name
+                    ticket.price.toString(),
+                    ticket.description ?: "",
+                    buyerId                  // Buyer's userId
+                )
+            )
+
+            // 2. Delete from tickets table
+            db.execSQL(
+                "DELETE FROM ${DatabaseSchema.TICKETS_TABLE_NAME} WHERE id = ?",
+                arrayOf(ticket.id.toString())
+            )
+
+            db.setTransactionSuccessful()
+            true
+        } catch (e: Exception) {
+            print("Error purchasing ticket: $e")
+            false
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
+    }
 
     // ============================================
     // PURCHASED TICKETS TABLE HELPER FUNCTIONS
@@ -570,7 +618,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
     // ============================================
     // PAYMENT METHODS TABLE HELPER FUNCTIONS
     // ============================================
-    
+
     fun insertPaymentMethod(paymentMethod: PaymentMethod): Boolean {
         val db = getDatabase()
         return try {
@@ -599,7 +647,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
     fun getPaymentMethodsByUserId(userId: String): List<PaymentMethod> {
         val db = getDatabase()
         val paymentMethods = mutableListOf<PaymentMethod>()
-        
+
         val cursor = db.rawQuery(
             """
             SELECT userId, cardNumber, expiry, cvv 
@@ -608,7 +656,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             """,
             arrayOf(userId)
         )
-        
+
         while (cursor.moveToNext()) {
             paymentMethods.add(
                 PaymentMethod(
@@ -619,7 +667,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
                 )
             )
         }
-        
+
         cursor.close()
         db.close()
         return paymentMethods
