@@ -21,7 +21,7 @@ data class Profile(
 data class PurchasedTicket(
     val id: Int,
     val userId: String,
-    val event: String,
+    val name: String,
     val price: Float,
     val description: String? = null,
     val buyerId: String
@@ -32,7 +32,16 @@ data class PaymentMethod(
     val cardNumber: String,
     val expiry: String,
     val cvv: String
-)
+) {
+    // Returns masked card number for display (e.g., "**** **** **** 1234")
+    fun getMaskedCardNumber(): String {
+        return if (cardNumber.length >= 4) {
+            "**** **** **** ${cardNumber.takeLast(4)}"
+        } else {
+            cardNumber
+        }
+    }
+}
 
 data class UpcomingShow(
     val showId: Int,
@@ -106,15 +115,12 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
         CREATE TABLE $PURCHASED_TICKETS_TABLE_NAME (
             id INTEGER NOT NULL,
             userId TEXT NOT NULL,
-            event TEXT NOT NULL,
+            name TEXT NOT NULL,
             price INTEGER NOT NULL,
             description TEXT,
             buyerId TEXT NOT NULL,
             PRIMARY KEY (buyerId, id),
             FOREIGN KEY (userId) REFERENCES $PROFILES_TABLE_NAME(userId)
-                ON DELETE CASCADE
-                ON UPDATE CASCADE,
-            FOREIGN KEY (event) REFERENCES $SHOWS_TABLE_NAME(event)
                 ON DELETE CASCADE
                 ON UPDATE CASCADE,
             FOREIGN KEY (buyerId) REFERENCES $PROFILES_TABLE_NAME(userId)
@@ -461,6 +467,45 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         db.close()
         return entries
     }
+    fun purchaseTicket(ticket: TicketEntry, buyerId: String): Boolean {
+        val db = getDatabase()
+
+        return try {
+            db.beginTransaction()
+
+            // 1. Insert into purchased_tickets table
+            db.execSQL(
+                """
+            INSERT INTO ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME} 
+            (id, userId, name, price, description, buyerId) 
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+                arrayOf(
+                    ticket.id.toString(),
+                    ticket.userId,           // Original seller's userId
+                    ticket.name,             // Event name
+                    ticket.price.toString(),
+                    ticket.description ?: "",
+                    buyerId                  // Buyer's userId
+                )
+            )
+
+            // 2. Delete from tickets table
+            db.execSQL(
+                "DELETE FROM ${DatabaseSchema.TICKETS_TABLE_NAME} WHERE id = ?",
+                arrayOf(ticket.id.toString())
+            )
+
+            db.setTransactionSuccessful()
+            true
+        } catch (e: Exception) {
+            print("Error purchasing ticket: $e")
+            false
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
+    }
 
     // ============================================
     // PURCHASED TICKETS TABLE HELPER FUNCTIONS
@@ -472,13 +517,13 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.execSQL(
                 """
                 INSERT INTO ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME} 
-                (id, userId, event, price, description, buyerId) 
+                (id, userId, name, price, description, buyerId) 
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 arrayOf(
                     purchasedTicket.id.toString(),
                     purchasedTicket.userId,
-                    purchasedTicket.event,
+                    purchasedTicket.name,
                     purchasedTicket.price.toString(),
                     purchasedTicket.description,
                     purchasedTicket.buyerId
@@ -499,7 +544,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         
         val cursor = db.rawQuery(
             """
-            SELECT id, userId, event, price, description, buyerId 
+            SELECT id, userId, name, price, description, buyerId 
             FROM ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME} 
             WHERE buyerId = ?
             """,
@@ -511,7 +556,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
                 PurchasedTicket(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow("id")),
                     userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
-                    event = cursor.getString(cursor.getColumnIndexOrThrow("event")),
+                    name = cursor.getString(cursor.getColumnIndexOrThrow("event")),
                     price = cursor.getFloat(cursor.getColumnIndexOrThrow("price")),
                     description = cursor.getString(cursor.getColumnIndexOrThrow("description")),
                     buyerId = cursor.getString(cursor.getColumnIndexOrThrow("buyerId"))
@@ -529,7 +574,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         val tickets = mutableListOf<PurchasedTicket>()
         
         val cursor = db.rawQuery(
-            "SELECT id, userId, event, price, description, buyerId FROM ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME}",
+            "SELECT id, userId, name, price, description, buyerId FROM ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME}",
             null
         )
         
@@ -538,7 +583,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
                 PurchasedTicket(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow("id")),
                     userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
-                    event = cursor.getString(cursor.getColumnIndexOrThrow("event")),
+                    name = cursor.getString(cursor.getColumnIndexOrThrow("event")),
                     price = cursor.getFloat(cursor.getColumnIndexOrThrow("price")),
                     description = cursor.getString(cursor.getColumnIndexOrThrow("description")),
                     buyerId = cursor.getString(cursor.getColumnIndexOrThrow("buyerId"))
@@ -570,7 +615,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
     // ============================================
     // PAYMENT METHODS TABLE HELPER FUNCTIONS
     // ============================================
-    
+
     fun insertPaymentMethod(paymentMethod: PaymentMethod): Boolean {
         val db = getDatabase()
         return try {
@@ -599,7 +644,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
     fun getPaymentMethodsByUserId(userId: String): List<PaymentMethod> {
         val db = getDatabase()
         val paymentMethods = mutableListOf<PaymentMethod>()
-        
+
         val cursor = db.rawQuery(
             """
             SELECT userId, cardNumber, expiry, cvv 
@@ -608,7 +653,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             """,
             arrayOf(userId)
         )
-        
+
         while (cursor.moveToNext()) {
             paymentMethods.add(
                 PaymentMethod(
@@ -619,7 +664,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
                 )
             )
         }
-        
+
         cursor.close()
         db.close()
         return paymentMethods

@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun ListingsScreen(modifier: Modifier = Modifier, userId: String?) {
+fun ListingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val dbHelper = remember { DatabaseHelper(context) }
     val userPreferences = remember { UserPreferences(context) }

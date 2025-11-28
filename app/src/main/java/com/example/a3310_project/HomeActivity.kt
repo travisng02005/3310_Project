@@ -1,8 +1,5 @@
 package com.example.a3310_project
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,11 +30,13 @@ fun MainScreen(
     
     var searchQuery by remember { mutableStateOf("") }
     var selectedTicket by remember { mutableStateOf<TicketEntry?>(null) }
+    var ticketToPurchase by remember { mutableStateOf<TicketEntry?>(null) } // Track ticket for payment
     var showPaymentDialog by remember { mutableStateOf(false) }
     var showAuthDialog by remember { mutableStateOf(false) }
     var showPostDialog by remember { mutableStateOf(false) }
     var authErrorMessage by remember { mutableStateOf("") }
     var showLoginPrompt by remember { mutableStateOf(false) }
+    var showPurchaseSuccess by remember { mutableStateOf(false) }
 
     // Sample tickets data - now loaded from database
     var allTickets by remember { mutableStateOf<List<TicketEntry>>(emptyList()) }
@@ -46,11 +45,6 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         // Load tickets
         allTickets = dbHelper.getAllTickets()
-        
-        // Check for saved logged-in user
-
-
-
     }
 
     // Filter tickets based on search query
@@ -70,6 +64,7 @@ fun MainScreen(
                 ticket = ticket,
                 onDismiss = { selectedTicket = null },
                 onPurchase = {
+                    ticketToPurchase = ticket // Save the ticket for payment
                     selectedTicket = null
                     showPaymentDialog = true
                 }
@@ -78,12 +73,37 @@ fun MainScreen(
     }
 
     // Show payment dialog
-    if (showPaymentDialog) {
+    if (showPaymentDialog && ticketToPurchase != null) {
         PaymentDialog(
-            onDismiss = { showPaymentDialog = false },
-            onConfirm = {
+            dbHelper = dbHelper,
+            currentUser = currentUser,
+            ticket = ticketToPurchase!!,
+            onDismiss = { 
                 showPaymentDialog = false
-                // Here you would process the payment
+                ticketToPurchase = null
+            },
+            onConfirm = { success ->
+                showPaymentDialog = false
+                if (success) {
+                    // Reload tickets after purchase
+                    allTickets = dbHelper.getAllTickets()
+                    showPurchaseSuccess = true
+                }
+                ticketToPurchase = null
+            }
+        )
+    }
+
+    // Show purchase success dialog
+    if (showPurchaseSuccess) {
+        AlertDialog(
+            onDismissRequest = { showPurchaseSuccess = false },
+            title = { Text("Purchase Successful!", fontWeight = FontWeight.Bold) },
+            text = { Text("Your ticket has been purchased successfully. You can view it in your My Tickets section.") },
+            confirmButton = {
+                Button(onClick = { showPurchaseSuccess = false }) {
+                    Text("OK")
+                }
             }
         )
     }
@@ -273,7 +293,6 @@ fun MainScreen(
                             coroutineScope.launch {
                                 userPreferences.clearLoggedInUser()
                                 onLogout()
-
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -447,15 +466,33 @@ fun PurchaseDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentDialog(
+    dbHelper: DatabaseHelper,
+    currentUser: Profile?,
+    ticket: TicketEntry,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: (Boolean) -> Unit // Now returns success status
 ) {
     var cardNumber by remember { mutableStateOf("") }
     var expiryDate by remember { mutableStateOf("") }
     var cvv by remember { mutableStateOf("") }
     var cardholderName by remember { mutableStateOf("") }
+    var savePaymentMethod by remember { mutableStateOf(false) }
+    var purchaseError by remember { mutableStateOf<String?>(null) }
+    
+    // Saved payment methods state
+    var savedPaymentMethods by remember { mutableStateOf<List<PaymentMethod>>(emptyList()) }
+    var selectedPaymentMethod by remember { mutableStateOf<PaymentMethod?>(null) }
+    var dropdownExpanded by remember { mutableStateOf(false) }
+    
+    // Load saved payment methods when dialog opens
+    LaunchedEffect(currentUser) {
+        currentUser?.let { user ->
+            savedPaymentMethods = dbHelper.getPaymentMethodsByUserId(user.userId)
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -464,9 +501,141 @@ fun PaymentDialog(
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
+                // Show ticket being purchased
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = ticket.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "$${"%.2f".format(ticket.price)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Show error if any
+                if (purchaseError != null) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = purchaseError!!,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 Text("Enter your payment information", style = MaterialTheme.typography.bodyMedium)
 
                 Spacer(modifier = Modifier.height(16.dp))
+                
+                // Saved Payment Methods Dropdown
+                if (savedPaymentMethods.isNotEmpty()) {
+                    Text(
+                        text = "Saved Payment Methods",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    ExposedDropdownMenuBox(
+                        expanded = dropdownExpanded,
+                        onExpandedChange = { dropdownExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedPaymentMethod?.getMaskedCardNumber() ?: "Select a saved card",
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded)
+                            },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                        )
+                        
+                        ExposedDropdownMenu(
+                            expanded = dropdownExpanded,
+                            onDismissRequest = { dropdownExpanded = false }
+                        ) {
+                            // Option to enter new card
+                            DropdownMenuItem(
+                                text = { Text("Enter new card") },
+                                onClick = {
+                                    selectedPaymentMethod = null
+                                    cardNumber = ""
+                                    expiryDate = ""
+                                    cvv = ""
+                                    dropdownExpanded = false
+                                }
+                            )
+                            
+                            HorizontalDivider()
+                            
+                            // Saved cards
+                            savedPaymentMethods.forEach { paymentMethod ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Column {
+                                            Text(paymentMethod.getMaskedCardNumber())
+                                            Text(
+                                                "Expires: ${paymentMethod.expiry}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedPaymentMethod = paymentMethod
+                                        cardNumber = paymentMethod.cardNumber
+                                        expiryDate = paymentMethod.expiry
+                                        cvv = paymentMethod.cvv
+                                        dropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    HorizontalDivider()
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = if (selectedPaymentMethod != null) "Using saved card" else "Or enter new card details",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 // Cardholder Name
                 OutlinedTextField(
@@ -482,10 +651,19 @@ fun PaymentDialog(
                 // Card Number
                 OutlinedTextField(
                     value = cardNumber,
-                    onValueChange = { if (it.length <= 16) cardNumber = it },
+                    onValueChange = { 
+                        if (it.length <= 16 && it.all { char -> char.isDigit() }) {
+                            cardNumber = it
+                            // Clear selected payment method if user starts typing
+                            if (selectedPaymentMethod != null && it != selectedPaymentMethod?.cardNumber) {
+                                selectedPaymentMethod = null
+                            }
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Card Number") },
-                    placeholder = { Text("1234 5678 9012 3456") }
+                    placeholder = { Text("1234567890123456") },
+                    enabled = selectedPaymentMethod == null
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -500,23 +678,77 @@ fun PaymentDialog(
                         onValueChange = { if (it.length <= 5) expiryDate = it },
                         modifier = Modifier.weight(1f),
                         label = { Text("Expiry") },
-                        placeholder = { Text("MM/YY") }
+                        placeholder = { Text("MM/YY") },
+                        enabled = selectedPaymentMethod == null
                     )
 
                     // CVV
                     OutlinedTextField(
                         value = cvv,
-                        onValueChange = { if (it.length <= 3) cvv = it },
+                        onValueChange = { 
+                            if (it.length <= 3 && it.all { char -> char.isDigit() }) {
+                                cvv = it
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         label = { Text("CVV") },
-                        placeholder = { Text("123") }
+                        placeholder = { Text("123") },
+                        enabled = selectedPaymentMethod == null
                     )
+                }
+                
+                // Save payment method checkbox (only show for new cards)
+                if (selectedPaymentMethod == null && currentUser != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { savePaymentMethod = !savePaymentMethod }
+                    ) {
+                        Checkbox(
+                            checked = savePaymentMethod,
+                            onCheckedChange = { savePaymentMethod = it }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Save this payment method for future purchases",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
         },
         confirmButton = {
             Button(
-                onClick = onConfirm,
+                onClick = {
+                    if (currentUser == null) {
+                        purchaseError = "You must be logged in to purchase"
+                        return@Button
+                    }
+
+                    // Save payment method if checkbox is checked and it's a new card
+                    if (savePaymentMethod && selectedPaymentMethod == null) {
+                        val newPaymentMethod = PaymentMethod(
+                            userId = currentUser.userId,
+                            cardNumber = cardNumber,
+                            expiry = expiryDate,
+                            cvv = cvv
+                        )
+                        dbHelper.insertPaymentMethod(newPaymentMethod)
+                    }
+
+                    // Process the purchase - move ticket to purchased_tickets and delete from tickets
+                    val success = dbHelper.purchaseTicket(
+                        ticket = ticket,
+                        buyerId = currentUser.userId
+                    )
+
+                    if (success) {
+                        onConfirm(true)
+                    } else {
+                        purchaseError = "Failed to complete purchase. Please try again."
+                    }
+                },
                 enabled = cardNumber.isNotEmpty() && expiryDate.isNotEmpty() &&
                         cvv.isNotEmpty() && cardholderName.isNotEmpty()
             ) {

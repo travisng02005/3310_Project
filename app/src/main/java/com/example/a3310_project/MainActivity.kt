@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -27,10 +28,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            _3310_ProjectTheme {
-                // ✅ Lifted login state
+            val context = LocalContext.current
+            val userPreferences = remember { UserPreferences(context) }
+
+            // Track dark mode preference
+            var darkMode by remember { mutableStateOf("system") }
+
+            // Load saved dark mode preference
+            LaunchedEffect(Unit) {
+                userPreferences.darkModeFlow.collect { mode ->
+                    darkMode = mode
+                }
+            }
+
+            // Determine if dark theme should be used
+            val isDarkTheme = when (darkMode) {
+                "dark" -> true
+                "light" -> false
+                else -> isSystemInDarkTheme() // "system" - follow device setting
+            }
+
+            _3310_ProjectTheme(darkTheme = isDarkTheme) {
+                // Login state
                 var isLoggedIn by rememberSaveable { mutableStateOf(false) }
-                var currentUser by rememberSaveable { mutableStateOf<Profile?>(null) }
+                var currentUser by remember { mutableStateOf<Profile?>(null) }
 
                 _3310_ProjectApp(
                     isLoggedIn = isLoggedIn,
@@ -63,7 +84,7 @@ fun _3310_ProjectApp(
     val dbHelper = remember { DatabaseHelper(context) }
     val userPreferences = remember { UserPreferences(context) }
 
-    // 🔥 Load login state from DataStore only once
+    // Load login state from DataStore only once
     LaunchedEffect(Unit) {
         userPreferences.loggedInUserIdFlow.collect { userId ->
             if (userId != null) {
@@ -100,13 +121,11 @@ fun _3310_ProjectApp(
                 )
 
                 AppDestinations.LISTINGS -> ListingsScreen(
-                    modifier = Modifier.padding(innerPadding),
-                    userId = currentUser?.userId ?: "jessicanguyen"
+                    modifier = Modifier.padding(innerPadding)
                 )
 
                 AppDestinations.PROFILE -> ProfileScreen(
-                    modifier = Modifier.padding(innerPadding),
-                    isLoggedIn = isLoggedIn
+                    modifier = Modifier.padding(innerPadding)
                 )
             }
         }

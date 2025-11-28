@@ -20,6 +20,8 @@ class UserPreferences(private val context: Context) {
         val GALLERY_KEY = stringSetPreferencesKey("gallery_uris")
         val LOGGED_IN_USER_ID_KEY = stringPreferencesKey("logged_in_user_id")
         val IS_LOGGED_IN_KEY = booleanPreferencesKey("is_logged_in")
+        val PROFILE_PHOTO_KEY = stringPreferencesKey("profile_photo_uri")
+        val DARK_MODE_KEY = stringPreferencesKey("dark_mode") // "system", "light", or "dark"
     }
 
     val usernameFlow: Flow<String> = context.dataStore.data
@@ -33,6 +35,12 @@ class UserPreferences(private val context: Context) {
 
     val isLoggedInFlow: Flow<Boolean> = context.dataStore.data
         .map { prefs -> prefs[IS_LOGGED_IN_KEY] ?: false }
+
+    val profilePhotoFlow: Flow<String?> = context.dataStore.data
+        .map { prefs -> prefs[PROFILE_PHOTO_KEY] }
+
+    val darkModeFlow: Flow<String> = context.dataStore.data
+        .map { prefs -> prefs[DARK_MODE_KEY] ?: "system" }
 
     suspend fun saveUsername(name: String) {
         context.dataStore.edit { prefs ->
@@ -57,6 +65,24 @@ class UserPreferences(private val context: Context) {
         context.dataStore.edit { prefs ->
             prefs.remove(LOGGED_IN_USER_ID_KEY)
             prefs[IS_LOGGED_IN_KEY] = false
+        }
+    }
+
+    suspend fun saveProfilePhoto(uri: String) {
+        context.dataStore.edit { prefs ->
+            prefs[PROFILE_PHOTO_KEY] = uri
+        }
+    }
+
+    suspend fun clearProfilePhoto() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(PROFILE_PHOTO_KEY)
+        }
+    }
+
+    suspend fun saveDarkMode(mode: String) {
+        context.dataStore.edit { prefs ->
+            prefs[DARK_MODE_KEY] = mode
         }
     }
 }
