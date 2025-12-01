@@ -577,7 +577,8 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         val tickets = mutableListOf<PurchasedTicket>()
         
         val cursor = db.rawQuery(
-            "SELECT id, userId, event, price, description, buyerId FROM ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME}",
+            "SELECT id, userId, even" +
+                    "t, price, description, buyerId FROM ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME}",
             null
         )
         
