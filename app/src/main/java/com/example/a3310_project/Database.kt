@@ -21,7 +21,7 @@ data class Profile(
 data class PurchasedTicket(
     val id: Int,
     val userId: String,
-    val name: String,
+    val event: String,
     val price: Float,
     val description: String? = null,
     val buyerId: String
@@ -115,12 +115,15 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
         CREATE TABLE $PURCHASED_TICKETS_TABLE_NAME (
             id INTEGER NOT NULL,
             userId TEXT NOT NULL,
-            name TEXT NOT NULL,
+            event TEXT NOT NULL,
             price INTEGER NOT NULL,
             description TEXT,
             buyerId TEXT NOT NULL,
             PRIMARY KEY (buyerId, id),
             FOREIGN KEY (userId) REFERENCES $PROFILES_TABLE_NAME(userId)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+            FOREIGN KEY (event) REFERENCES $SHOWS_TABLE_NAME(event)
                 ON DELETE CASCADE
                 ON UPDATE CASCADE,
             FOREIGN KEY (buyerId) REFERENCES $PROFILES_TABLE_NAME(userId)
@@ -477,7 +480,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.execSQL(
                 """
             INSERT INTO ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME} 
-            (id, userId, name, price, description, buyerId) 
+            (id, userId, event, price, description, buyerId) 
             VALUES (?, ?, ?, ?, ?, ?)
             """,
                 arrayOf(
@@ -517,13 +520,13 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
             db.execSQL(
                 """
                 INSERT INTO ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME} 
-                (id, userId, name, price, description, buyerId) 
+                (id, userId, event, price, description, buyerId) 
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 arrayOf(
                     purchasedTicket.id.toString(),
                     purchasedTicket.userId,
-                    purchasedTicket.name,
+                    purchasedTicket.event,
                     purchasedTicket.price.toString(),
                     purchasedTicket.description,
                     purchasedTicket.buyerId
@@ -544,7 +547,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         
         val cursor = db.rawQuery(
             """
-            SELECT id, userId, name, price, description, buyerId 
+            SELECT id, userId, event, price, description, buyerId 
             FROM ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME} 
             WHERE buyerId = ?
             """,
@@ -556,7 +559,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
                 PurchasedTicket(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow("id")),
                     userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
-                    name = cursor.getString(cursor.getColumnIndexOrThrow("event")),
+                    event = cursor.getString(cursor.getColumnIndexOrThrow("event")),
                     price = cursor.getFloat(cursor.getColumnIndexOrThrow("price")),
                     description = cursor.getString(cursor.getColumnIndexOrThrow("description")),
                     buyerId = cursor.getString(cursor.getColumnIndexOrThrow("buyerId"))
@@ -574,7 +577,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
         val tickets = mutableListOf<PurchasedTicket>()
         
         val cursor = db.rawQuery(
-            "SELECT id, userId, name, price, description, buyerId FROM ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME}",
+            "SELECT id, userId, event, price, description, buyerId FROM ${DatabaseSchema.PURCHASED_TICKETS_TABLE_NAME}",
             null
         )
         
@@ -583,7 +586,7 @@ class DatabaseHelper(@Suppress("unused") private val context: Context) {
                 PurchasedTicket(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow("id")),
                     userId = cursor.getString(cursor.getColumnIndexOrThrow("userId")),
-                    name = cursor.getString(cursor.getColumnIndexOrThrow("event")),
+                    event = cursor.getString(cursor.getColumnIndexOrThrow("event")),
                     price = cursor.getFloat(cursor.getColumnIndexOrThrow("price")),
                     description = cursor.getString(cursor.getColumnIndexOrThrow("description")),
                     buyerId = cursor.getString(cursor.getColumnIndexOrThrow("buyerId"))
