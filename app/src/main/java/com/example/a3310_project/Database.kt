@@ -177,7 +177,7 @@ class DatabaseSchema(context: Context) : SQLiteOpenHelper(
         db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('John Doe', 'john_doe', 'password123')")
         db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('Jane Smith', 'jane_smith', 'password123')")
         db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('Mike Johnson', 'music_lover', 'password123')")
-        db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('Jessica Nguyen', 'jessicanguyen', 'password124')")
+        db.execSQL("INSERT INTO $PROFILES_TABLE_NAME (name, userId, password) VALUES ('Test User', 'testUser', 'testUser123!')")
 
         // Sample upcoming shows (must be inserted before tickets that reference them)
         db.execSQL("INSERT INTO $SHOWS_TABLE_NAME (event, date, time) VALUES ('Coldplay Concert', '2025-12-15', '19:00')")

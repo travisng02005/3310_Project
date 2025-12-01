@@ -1,5 +1,10 @@
 Fanatix
-By: Travis Ngo, Jessica Nguyen, Khai Nguyen, Diego Yep
+
+By: 
+    Travis Ngo, txn7410@mavs.uta.edu
+    Jessica Nguyen, jbn7441@mavs.uta.edu, 817-291-8845
+    Khai Nguyen, kxn6317@mavs.uta.edu, 682-597-3559
+    Diego Yep, day7605@mavs.uta.edu
 
 Instructions to run in Android Studio:
 
