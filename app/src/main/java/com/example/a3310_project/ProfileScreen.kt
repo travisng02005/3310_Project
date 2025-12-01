@@ -146,12 +146,11 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Profile Photo - clickable to change
+                // Profile Photo
                 Box(
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape)
-                        .clickable { showPhotoOptions = true }
                 ) {
                     if (selectedProfilePhotoUri != null) {
                         Image(
@@ -166,21 +165,6 @@ fun ProfileScreen(
                             contentDescription = "Profile Picture",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                    
-                    // Edit overlay
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Edit",
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -308,17 +292,6 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                // Set as profile photo button
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            userPreferences.saveProfilePhoto(galleryImages[currentIndex])
-                            selectedProfilePhotoUri = galleryImages[currentIndex]
-                        }
-                    }
-                ) {
-                    Text("Set as Profile Photo")
-                }
 
                 Spacer(modifier = Modifier.width(8.dp))
 

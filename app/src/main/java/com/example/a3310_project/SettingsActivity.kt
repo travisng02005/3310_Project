@@ -1,16 +1,18 @@
 package com.example.a3310_project
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -19,13 +21,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.example.a3310_project.ui.theme._3310_ProjectTheme
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.isSystemInDarkTheme
+
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +54,7 @@ class SettingsActivity : ComponentActivity() {
                 "dark" -> true
                 "light" -> false
                 else -> isSystemInDarkTheme()
+
             }
 
             _3310_ProjectTheme(darkTheme = isDarkTheme) {
@@ -72,7 +80,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
     val coroutineScope = rememberCoroutineScope()
-    
+
     var username by remember { mutableStateOf("") }
     var showThemeDialog by remember { mutableStateOf(false) }
 
@@ -80,6 +88,29 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         userPreferences.usernameFlow.collect { name ->
             username = name
+        }
+    }
+
+    // --- Profile Photo State ---
+    var selectedProfilePhotoUri by remember { mutableStateOf<String?>(null) }
+
+    // Load saved profile photo
+    LaunchedEffect(Unit) {
+        userPreferences.profilePhotoFlow.collect { savedPhotoUri ->
+            selectedProfilePhotoUri = savedPhotoUri
+        }
+    }
+
+    // Image picker launcher
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val uriString = it.toString()
+            coroutineScope.launch {
+                userPreferences.saveProfilePhoto(uriString)
+                selectedProfilePhotoUri = uriString
+            }
         }
     }
 
@@ -102,22 +133,48 @@ fun SettingsScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Profile picture (clickable to change)
-            Image(
-                painter = painterResource(id = R.drawable.profile_placeholder),
-                contentDescription = "Profile Picture",
+            // Profile picture (clickable with overlay)
+            Box(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(Color.Gray.copy(alpha = 0.2f))
-                    .clickable {
-                        // TODO: Add image picker logic here
-                    }
-            )
+                    .clickable { pickImageLauncher.launch("image/*") }
+            ) {
+                if (selectedProfilePhotoUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(Uri.parse(selectedProfilePhotoUri)),
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.profile_placeholder),
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                // Edit overlay
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Edit",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Username editor
+            // --- Username editor, dark mode, logout etc. ---
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -127,7 +184,6 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Save button for username
             Button(
                 onClick = {
                     coroutineScope.launch {
